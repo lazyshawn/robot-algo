@@ -4,17 +4,15 @@
 #include <iostream>
 
 // 找凸集中在给定方向上的最远点
-Eigen::Vector3d farthest_point_on_direction(std::vector<Eigen::Vector3d> convexSet,
-    Eigen::Vector3d dir) {
+Eigen::Vector3d farthest_point_on_direction(std::vector<Eigen::Vector3d> convexSet, Eigen::Vector3d dir) {
   if (convexSet.empty()) printf("the given convex set is empty!\n");
 
-  int num_vertex = convexSet.size();
   double maxProj = -1*DBL_MAX, tmpProj = 0.0;
   Eigen::Vector3d farthestPoint{0,0,0};
 
   // 遍历每个顶点，对比顶点在给定方向上的投影，找到最远的点
   for (auto& vertex : convexSet) {
-    tmpProj = vertex.transpose() * dir;
+    tmpProj = vertex.dot(dir);
     if (tmpProj > maxProj) {
       maxProj = tmpProj;
       farthestPoint = vertex;
@@ -27,11 +25,8 @@ Eigen::Vector3d farthest_point_on_direction(std::vector<Eigen::Vector3d> convexS
 Eigen::Vector3d gjk_support(std::vector<Eigen::Vector3d> setA,
                             std::vector<Eigen::Vector3d> setB,
                             Eigen::Vector3d dir) {
-  Eigen::Vector3d vertexA, vertexB;
-  vertexA = farthest_point_on_direction(setA, dir);
-  vertexB = farthest_point_on_direction(setB, -dir);
-  // std::cout << "vertexA = " << vertexA.transpose() << std::endl;
-  // std::cout << "vertexB = " << vertexB.transpose() << std::endl;
+  Eigen::Vector3d vertexA = farthest_point_on_direction(setA, dir);
+  Eigen::Vector3d vertexB = farthest_point_on_direction(setB, -dir);
   return vertexA-vertexB;
 }
 
@@ -43,19 +38,20 @@ Eigen::Vector3d gjk_collision_update(std::vector<Eigen::Vector3d>& simplexList, 
   Eigen::Vector3d dir{0,0,0};
   // 单纯形的特定边，s: Support, abc: 单纯形中第一至三个顶点
   Eigen::Vector3d sa, sb, sc, norm;
+  double tolerance = 1e-6;
 
   if (num_vertex == 1) {
     // 将新的 Support 点加入单纯形
     simplexList.emplace_back(support);
     // 两点连线的指向原点法向量
     sa = simplexList[0] - support;
-    dir = -sa.cross(sa.cross(support));
+    dir = sa.cross(sa.cross(support));
     // 保证法线方向指向原点
-    return (dir.dot(support) > 0) ? -dir : dir;
+    // return (dir.dot(support) > 0) ? -dir : dir;
   }
   else if (num_vertex == 2) {
     // 线段、原点、Support点在同一平面
-    if (simplexList[0].cross(simplexList[1]).dot(support) == 0) {
+    if (fabs(simplexList[0].cross(simplexList[1]).dot(support)) < tolerance) {
       // 原点将在 Support 与单纯形中一点的连线外侧
       for (int i=0; i<2; ++i) {
         sa = simplexList[i] - support;
@@ -101,38 +97,30 @@ Eigen::Vector3d gjk_collision_update(std::vector<Eigen::Vector3d>& simplexList, 
 bool gjk_collision_detection(std::vector<Eigen::Vector3d> setA,
                               std::vector<Eigen::Vector3d> setB) {
   int maxIte = 100;
+  double tolerance = 1e-6;
   // 第一次搜索方向
   Eigen::Vector3d dir = (setA[0] - setB[0]);
-  std::cout << "dir = " << dir.transpose() << std::endl;
   // 第一个 Support 点
   Eigen::Vector3d support = gjk_support(setA, setB, dir);
-  std::cout << "support = " << support.transpose() << std::endl;
   // 单纯形
   std::vector<Eigen::Vector3d> simplexList; 
   simplexList.emplace_back(support);
   // 第二次搜索
   dir = -support/support.norm();
-  std::cout << std::endl;
 
   // 开始循环
   for (int i=0; i<maxIte; ++i) {
-    // std::cout << "i = " << i << std::endl;
-    // std::cout << "dir = " << dir.transpose() << std::endl;
-
     // 新的 Support 点
     support = gjk_support(setA, setB, dir);
 
-    // std::cout << "support = " << support.transpose()  << std::endl;
-    // std::cout << "inner pro = " << support.transpose() * dir << std::endl;
-    // std::cout << std::endl;
     // 不能再找到跨越原点的点
-    if (support.dot(dir) <= 0) {
+    if (support.dot(dir) < tolerance) {
       return false;
     }
+
     // 更新单纯形和搜索方向
     dir = gjk_collision_update(simplexList, support);
     if (dir.norm() == 0) {
-      std::cout << "simplexList.size() = " << simplexList.size() << std::endl;
       return true;
     }
 
@@ -142,8 +130,7 @@ bool gjk_collision_detection(std::vector<Eigen::Vector3d> setA,
 }
 
 // 计算未碰撞的凸集上的最近距离
-double gjk_closest_distance(std::vector<Eigen::Vector3d> setA,
-                            std::vector<Eigen::Vector3d> setB) {
+double gjk_closest_distance(std::vector<Eigen::Vector3d> setA, std::vector<Eigen::Vector3d> setB) {
   // 维度
   int dim = setA[0].size();
   if (dim - 2 != 0 && dim - 3 != 0) {
@@ -168,16 +155,13 @@ double gjk_closest_distance(std::vector<Eigen::Vector3d> setA,
     Eigen::Vector3d newSpt = gjk_support(setA, setB, dir);
     // 新 Support 点和单纯形在同一个平面，不可以组成离原点更近的面
     if (dir.dot(support) - dir.dot(newSpt) < tolerance && simplexList.size() > 1) {
-      std::cout << "dir = " << dir.transpose() << std::endl;
       break;
     }
     // 更新 Support 点
     support = newSpt;
     // 更新单纯形和搜索方向(返回值为最近点，取反后即为搜索方向)
     dir = -1 * gjk_closest_distance_update(simplexList, support);
-    std::cout << "i = " << i << " , size = " << simplexList.size() << std::endl;
   }
-  std::cout << "simplexList.size = " << simplexList.size() << std::endl;
   return dir.norm();
 }
 
@@ -222,11 +206,9 @@ Eigen::Vector3d closest_point_on_face(std::vector<Eigen::Vector3d> simplexList) 
     if (ao.dot(ab) < 0) {
       // 原点在 a 外侧，最近点在 ac 上
       return closest_point_on_line({-ao, -co});
-      // return gjk_closest_point_on_line({simplexList[i], simplexList[(i+2)%3]});
     } else if (bo.dot(-ab) < 0) {
       // 原点在 b 外侧，最近点在 bc 上
       return closest_point_on_line({-bo, -co});
-      // return gjk_closest_point_on_line({simplexList[(i+1)%3], simplexList[(i+2)%3]});
     } else {
       // 原点在 ab 内，最近点在 ab 上
       return closest_point_on_line({-ao, -bo});

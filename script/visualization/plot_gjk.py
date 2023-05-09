@@ -50,8 +50,8 @@ if __name__ == "__main__":
     ax.set_ylabel('Y')
     ax.set_zlabel('Z')
 
-    # 读取 cpp 生成的测试数据
-    mat = np.loadtxt("../build/data/simplex_points").transpose()
+    # 读取 cpp 生成的测试数据，在项目根目录下运行`script/..`
+    mat = np.loadtxt("build/data/simplex_points").transpose()
     n = int(len(mat[0])/2)
     setA = mat[:,0:n]
     setB = mat[:,n:2*n]
