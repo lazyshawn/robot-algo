@@ -7,13 +7,12 @@
 Eigen::Vector3d farthest_point_on_direction(std::vector<Eigen::Vector3d> convexSet, Eigen::Vector3d dir) {
   if (convexSet.empty()) printf("the given convex set is empty!\n");
 
-  int num_vertex = convexSet.size();
   double maxProj = -1*DBL_MAX, tmpProj = 0.0;
   Eigen::Vector3d farthestPoint{0,0,0};
 
   // 遍历每个顶点，对比顶点在给定方向上的投影，找到最远的点
   for (auto& vertex : convexSet) {
-    tmpProj = vertex.transpose() * dir;
+    tmpProj = vertex.dot(dir);
     if (tmpProj > maxProj) {
       maxProj = tmpProj;
       farthestPoint = vertex;
@@ -45,9 +44,9 @@ Eigen::Vector3d gjk_collision_update(std::vector<Eigen::Vector3d>& simplexList, 
     simplexList.emplace_back(support);
     // 两点连线的指向原点法向量
     sa = simplexList[0] - support;
-    dir = -sa.cross(sa.cross(support));
+    dir = sa.cross(sa.cross(support));
     // 保证法线方向指向原点
-    return (dir.dot(support) > 0) ? -dir : dir;
+    // return (dir.dot(support) > 0) ? -dir : dir;
   }
   else if (num_vertex == 2) {
     // 线段、原点、Support点在同一平面
@@ -96,6 +95,7 @@ Eigen::Vector3d gjk_collision_update(std::vector<Eigen::Vector3d>& simplexList, 
 
 bool gjk_collision_detection(std::vector<Eigen::Vector3d> setA, std::vector<Eigen::Vector3d> setB) {
   int maxIte = 100;
+  double tolerance = 1e-6;
   // 第一次搜索方向
   Eigen::Vector3d dir = (setA[0] - setB[0]);
   // 第一个 Support 点
@@ -115,6 +115,7 @@ bool gjk_collision_detection(std::vector<Eigen::Vector3d> setA, std::vector<Eige
     if (support.dot(dir) < 0) {
       return false;
     }
+
     // 更新单纯形和搜索方向
     dir = gjk_collision_update(simplexList, support);
     if (dir.norm() == 0) {

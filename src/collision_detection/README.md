@@ -15,6 +15,12 @@ configuration space.
 [GJK](https://dyn4j.org/2010/04/gjk-gilbert-johnson-keerthi/),
 [GJK-distance](https://dyn4j.org/2010/04/gjk-distance-closest-points/)
 
+**TODOs:**
+
+* [ ] Correct the minimal distance.
+* [ ] Record the closest points.
+
+
 ✨ Flexible Collision Library (FCL)
 -----------------------------------
 ### Introduction to FCL
