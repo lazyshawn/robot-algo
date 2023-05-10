@@ -51,7 +51,7 @@ if __name__ == "__main__":
     ax.set_zlabel('Z')
 
     # 读取 cpp 生成的测试数据
-    mat = np.loadtxt("../build/data/simplex_points").transpose()
+    mat = np.loadtxt("build/data/simplex_points").transpose()
     n = int(len(mat[0])/2)
     setA = mat[:,0:n]
     setB = mat[:,n:2*n]
