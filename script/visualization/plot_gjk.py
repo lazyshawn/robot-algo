@@ -16,9 +16,9 @@ def plot_triangle(ax, triangle, color_='red'):
     # 散点图
     ax.scatter(x,y,z, color = color_)
     # 绘制边
-    ax.plot(x,y,z,'gray')
+    ax.plot(x,y,z,'k')
     # 边封闭
-    ax.plot(x[[0,-1]],y[[0,-1]],z[[0,-1]],'gray')
+    ax.plot(x[[0,-1]],y[[0,-1]],z[[0,-1]],'k')
     # 三角形表面
     points = [list(zip(x, y, z))]
     triangle = Poly3DCollection(points, alpha=0.25, facecolor=color_)

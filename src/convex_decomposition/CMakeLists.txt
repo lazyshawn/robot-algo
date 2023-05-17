@@ -3,6 +3,8 @@ add_library(quickhull SHARED
   quickhull.cpp
 )
 include_directories(${PROJECT_SOURCE_DIR}/include)
+# Specify the dependencies for a lib
+target_link_libraries(quickhull algebra)
 # Usage requirement of lib
 target_include_directories(quickhull
   INTERFACE ${PROJECT_SOURCE_DIR}/include

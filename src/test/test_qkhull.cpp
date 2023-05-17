@@ -14,7 +14,7 @@ int main(int argc, char** argv) {
   std::ofstream ofile("build/data/qkhull_points", std::ios::trunc);
  
   // ramdom matrix
-  Eigen::MatrixXd randomMat = Eigen::MatrixXd::NullaryExpr(3,100,normal);
+  Eigen::MatrixXd randomMat = Eigen::MatrixXd::NullaryExpr(3,10,normal);
   for (int i=0; i<randomMat.cols(); ++i) {
     set.emplace_back(randomMat.col(i));
     ofile << set[i].transpose() << std::endl;
