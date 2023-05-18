@@ -56,25 +56,31 @@ qkhull::VertexIterator qkhull::Face::furthestVertex() {
   return furthestV;
 }
 
-void qkhull::Face::visit() {
-  faceFlag = FaceStatus::visited;
+bool qkhull::Face::visited() {
+  if (faceFlag != FaceStatus::notVisited) {
+    return true;
+  }
+  return false;
 }
-bool qkhull::Face::isVisited() {
-  if (faceFlag != FaceStatus::notVisit) {
+void qkhull::Face::setVisible() {
+  faceFlag = FaceStatus::visible;
+}
+bool qkhull::Face::isVisible() {
+  if (faceFlag != FaceStatus::visible) {
     return true;
   }
   return false;
 }
 void qkhull::Face::resetVisit() {
-  faceFlag = FaceStatus::notVisit;
+  faceFlag = FaceStatus::notVisited;
 }
 
 void qkhull::Face::setBorder() {
-  faceFlag = FaceStatus::borderland;
+  faceFlag = FaceStatus::border;
 }
 
 bool qkhull::Face::onBorder() {
-  if (faceFlag == FaceStatus::borderland) {
+  if (faceFlag == FaceStatus::border) {
     return true;
   }
   return false;
@@ -108,8 +114,6 @@ void qkhull::Edge::setNeighbors(ptrFace unvisibleFace, ptrFace visibleFce) {
 }
 
 void qkhull::quickhull(const std::vector<Eigen::Vector3d>& set) {
-  int num_vertex = set.size();
-
   // 复制所有点到初始点集
   VertexList vertexList;
   std::shared_ptr<Vertex> tmpVtx;
@@ -120,43 +124,33 @@ void qkhull::quickhull(const std::vector<Eigen::Vector3d>& set) {
   }
 
   // 初始化四面体
-  FaceList cvxHull;
+  FaceList tetrahedron, cvxHull;
   std::cout << "===> initTetrahedron:" << std::endl;
-  initTetrahedron(vertexList, cvxHull);
+  initTetrahedron(vertexList, tetrahedron);
 
   std::cout << "\nnorm of plane:" << std::endl;
-  for (FaceIterator ite = cvxHull.begin(); ite != cvxHull.end(); ++ite) {
+  for (FaceIterator ite = tetrahedron.begin(); ite != tetrahedron.end(); ++ite) {
     std::cout << "norm = " << (*ite)->norm.transpose() << std::endl;
   }
 
   // 分配外部点集
   std::cout << "\n===> allocOuterSet:" << std::endl;
-  allocOuterSet(vertexList, cvxHull);
+  allocOuterSet(vertexList, tetrahedron);
 
-  int i=-1, numOutPoint=0;
-  for (FaceIterator ite=cvxHull.begin(); ite!=cvxHull.end(); ++ite) {
-    int tmpOuterPoint = (*ite)->pOuterSet->vertexList.size();
+  int numOutPoint=0;
+  for (auto& ptrF : tetrahedron) {
+    int tmpOuterPoint = ptrF->pOuterSet->vertexList.size();
     numOutPoint += tmpOuterPoint;
-    i++;
-    std::cout << "Face: " << i << " Size: ";
-    std::cout << tmpOuterPoint << std::endl;
+    std::cout << "Size of outer point: " << tmpOuterPoint << std::endl;
   }
-  std::cout << "Num of outer point: " << numOutPoint << std::endl;
+  std::cout << "Total num of outer point: " << numOutPoint << std::endl;
 
   // 更新待定面集
   std::cout << "\n===> Setting Pending Face:" << std::endl;
   FaceList pendFace;
-  for (FaceIterator iteF=cvxHull.begin(); iteF!=cvxHull.end(); ++iteF) {
-    // 将外部点集非空的面加入待定面集
-    if ((*iteF)->pOuterSet->vertexList.size()) {
-      ptrFace tmpF = *iteF;
-      pendFace.emplace_back(tmpF);
-    }
-  }
-  std::cout << "pendFace.size() = " << pendFace.size() << std::endl;
+  updatePendFace(tetrahedron, pendFace, cvxHull);
 
-  // while (!pendFace.empty()) {
-  while (pendFace.empty()) continue;
+  while (!pendFace.empty()) {
     BorderEdgeMap borderEdgeM;
     FaceList listVisibleF;
 
@@ -164,10 +158,8 @@ void qkhull::quickhull(const std::vector<Eigen::Vector3d>& set) {
     // 找到待定面上方的最远点 p
     VertexIterator iteFurV = (*pendF)->furthestVertex();
     ptrVertex pFurVtx = *iteFurV;
-    std::cout << "furthestV = " << pFurVtx->point.transpose() << std::endl;
     // 从外部点集中删除最远点
     (*pendF)->pOuterSet->vertexList.erase(iteFurV);
-    std::cout << "furthestV = " << pFurVtx->point.transpose() << std::endl;
 
     // 找最远点的可见面，以及临界边
     std::cout << "\n===> findVisibleFace:" << std::endl;
@@ -179,19 +171,24 @@ void qkhull::quickhull(const std::vector<Eigen::Vector3d>& set) {
     gatherOuterSet(listVisibleF, visOuterSet);
     std::cout << "visOuterSet.size() = " << visOuterSet.size() << std::endl;
 
-    // 从待定面集删除可见面集中的面
-    for (FaceIterator iteF=listVisibleF.begin(); iteF!=listVisibleF.end(); ++iteF) {
-    }
-
     // 从临界边构建新的表面
     std::cout << "\n===> constractNewFace:" << std::endl;
     FaceList newFaceList;
     constractNewFace(pFurVtx, borderEdgeM, newFaceList);
-    std::cout << newFaceList.size() << std::endl;
-  // }
 
+    // 将可见面的外部点集分配到新表面
+    allocOuterSet(visOuterSet, newFaceList);
+
+    // 从待定面集和确定集中删除可见面集中的面
+    removeVisibleFace(pendFace, cvxHull);
+
+    // 更新待定面集
+    updatePendFace(newFaceList, pendFace, cvxHull);
+  } // while (!pendFace.empty())
+
+  std::cout << "cvxHull.size() = " << cvxHull.size() << std::endl;
   std::ofstream ofile("build/data/qkhull_hull", std::ios::trunc);
-  for (FaceIterator iteF=newFaceList.begin(); iteF!=newFaceList.end(); ++iteF) {
+  for (FaceIterator iteF=cvxHull.begin(); iteF!=cvxHull.end(); ++iteF) {
     for (int i=0; i<3; ++i) {
       ofile << (*iteF)->vertex[i]->point.transpose() << std::endl;
     }
@@ -284,87 +281,45 @@ void qkhull::initTetrahedron(VertexList& vertexList, FaceList& tetrahedron) {
   }
 }
 
-void qkhull::allocOuterSet(VertexList& vertexList, FaceList& faceList) {
-  // 将每个顶点分配到一个表面的外部点集
-  for (VertexIterator iteVtx = vertexList.begin(); iteVtx != vertexList.end(); ++iteVtx) {
-    // std::cout << "Point:" << (*iteVtx)->point.transpose() << std::endl;
-    int i=-1;
-    for (FaceIterator iteFace = faceList.begin(); iteFace != faceList.end(); ++iteFace) {
-      i++;
-      if ((*iteFace)->isAbove(*iteVtx)) {
-        // std::cout << "belongs to face: " << i << std::endl;
-        ptrVertex tmpVtx = std::make_shared<Vertex>();
-        tmpVtx = (*iteVtx);
-        (*iteFace)->pOuterSet->vertexList.emplace_back((tmpVtx));
-        break;
-      }
-    }
-  }
-  // clear vertexList
-  vertexList.clear();
-}
-
 void qkhull::findVisibleFace(ptrVertex ptrFurV, ptrFace& ptrPendF, FaceList& listVisibleF, BorderEdgeMap& edgeM) {
   // 访问标志位置位
-  ptrPendF->visit();
+  ptrPendF->setVisible();
   // 当前面加入可见面集
   listVisibleF.push_back(ptrPendF);
-  int num = 0;
-
-  std::cout << "furthestVertex = " << ptrFurV->point.transpose() << std::endl;
 
   // 宽度优先搜索：从可见面集中找到临界边
   for (FaceIterator iteF=listVisibleF.begin(); iteF!=listVisibleF.end(); ++iteF) {
-  // FaceIterator iteF = listVisibleF.begin();
-    // std::cout << "\nVertex of cur face:" << std::endl;
-    // for (int i=0; i<3; ++i) {
-    //   std::cout << (*iteF)->vertex[i]->point.transpose() << std::endl;
-    // }
-
     // 查看邻面是否可见，当前面顶点(i,i+1)对应的邻面
     for (int i=0; i<3; ++i) {
       // 创建临界边
       ptrEdge ptrE = std::make_shared<Edge>();
       ptrFace neighbor = (*iteF)->neighbor[i];
 
-      std::cout << "\nneighbor face:" << std::endl;
-      for (int j=0; j<3; ++j) {
-        std::cout<< neighbor->vertex[j]->point.transpose()<<std::endl;
-      }
-
       // 邻面未被访问过
-      if (!neighbor->isVisited()) {
-        neighbor->visit();
+      if (!neighbor->visited()) {
         // 该邻面可见，将其加入可见面集链表
         if (neighbor->isAbove(ptrFurV)) {
-          std::cout << "Face visitible" << std::endl;
+          neighbor->setVisible();
           listVisibleF.push_back(neighbor);
         }
         // 该邻面不可见，当前面和该邻面均为临界面
         else {
-          num++;
-          std::cout << "num of unvisibleFace = " << num  << std::endl;
           // 将该邻面设为临界面
           neighbor->setBorder();
-          // ptrE->init(*iteF, neighbor);
           ptrE->setEndpoints((*iteF)->vertex[i], (*iteF)->vertex[(i+1)%3]);
           ptrE->setNeighbors(neighbor, *iteF);
           // 要确保当前map中顶点的唯一性，此处选择有向线段末端点
           edgeM.insert(std::make_pair((*iteF)->vertex[i], ptrE));
-          std::cout << "edgeM.size() = " << edgeM.size() << std::endl;
         }
       } // if (!neighbor->isVisited())
       else if (neighbor->onBorder()) {
           ptrE = std::make_shared<Edge>();
-          // ptrE->init(*iteF, neighbor);
           ptrE->setEndpoints((*iteF)->vertex[i], (*iteF)->vertex[(i+1)%3]);
           ptrE->setNeighbors(neighbor, *iteF);
           // 要确保当前map中顶点的唯一性
           edgeM.insert(std::make_pair((*iteF)->vertex[i], ptrE));
-          std::cout << "edgeM.size() = " << edgeM.size() << std::endl;
       } // else
     }
-    std::cout << "VisibleF.size() = " << listVisibleF.size() << std::endl;
   }
 }
 
@@ -385,10 +340,6 @@ void qkhull::gatherOuterSet(FaceList& visFaceList, VertexList& visOuterSet) {
 }
 
 void qkhull::constractNewFace(ptrVertex pVertex, BorderEdgeMap& borderEdgeM, FaceList& newFaceL) {
-  std::cout << "borderEdgeM.size() = " << borderEdgeM.size() << std::endl;
-  for (EdgeIterator iteE=borderEdgeM.begin(); iteE!=borderEdgeM.end(); ++iteE) {
-    std::cout << (*iteE).second->vertex[1]->point.transpose() << std::endl;
-  }
   EdgeIterator curE = borderEdgeM.begin(), nextE;
   ptrEdge pEdge;
   Eigen::Vector3d norm, ab, ac, ad;
@@ -418,8 +369,6 @@ void qkhull::constractNewFace(ptrVertex pVertex, BorderEdgeMap& borderEdgeM, Fac
     borderEdgeM.erase(curE);
     curE = borderEdgeM.find(pEdge->vertex[1]);
   }
-  std::cout << "after edgeM.size() = " << borderEdgeM.size() << std::endl;
-  std::cout << "newFaceL.size() = " << newFaceL.size() << std::endl;
 
   // 更新新表面的另外两个相邻面，环形循环
   FaceIterator iteCurF=newFaceL.begin(), iteLastF = newFaceL.end();
@@ -438,3 +387,59 @@ void qkhull::constractNewFace(ptrVertex pVertex, BorderEdgeMap& borderEdgeM, Fac
     (*iteCurF)->setNorm(norm);
   }
 }
+
+void qkhull::allocOuterSet(VertexList& vertexList, FaceList& faceList) {
+  // 将每个顶点分配到一个表面的外部点集
+  for (VertexIterator iteVtx = vertexList.begin(); iteVtx != vertexList.end(); ++iteVtx) {
+    int i=-1;
+    for (FaceIterator iteFace = faceList.begin(); iteFace != faceList.end(); ++iteFace) {
+      i++;
+      if ((*iteFace)->isAbove(*iteVtx)) {
+        ptrVertex tmpVtx = std::make_shared<Vertex>();
+        tmpVtx = (*iteVtx);
+        (*iteFace)->pOuterSet->vertexList.emplace_back((tmpVtx));
+        break;
+      }
+    }
+  }
+  // clear vertexList
+  vertexList.clear();
+}
+
+void qkhull::removeVisibleFace(FaceList& listPendFace, FaceList& listFinishFace) {
+  FaceIterator iteTmpF;
+  for (FaceIterator iteF=listPendFace.begin(); iteF!=listPendFace.end();) {
+    iteTmpF = iteF;
+    iteTmpF++;
+    if ((*iteF)->faceFlag==FaceStatus::visible) {
+      std::cout << "Face visiable" << std::endl;
+      listPendFace.erase(iteF);
+    }
+    iteF = iteTmpF;
+  }
+  for (FaceIterator iteF=listFinishFace.begin(); iteF!=listFinishFace.end();) {
+    iteTmpF = iteF;
+    iteTmpF++;
+    if ((*iteF)->faceFlag==FaceStatus::visible) {
+      std::cout << "Face visiable" << std::endl;
+      listFinishFace.erase(iteF);
+    }
+    iteF = iteTmpF;
+  }
+}
+
+void qkhull::updatePendFace(FaceList& listNewF, FaceList& listPendF, FaceList& listFinishF) {
+  for (FaceIterator iteF=listNewF.begin(); iteF!=listNewF.end(); ++iteF) {
+    if ((*iteF)->pOuterSet->vertexList.size()) {
+      // 将外部点集非空的面加入待定面集
+      ptrFace tmpF = *iteF;
+      listPendF.push_back(tmpF);
+    } else {
+      // 记录外部点集为空的表面
+      ptrFace tmpF = *iteF;
+      listFinishF.push_back(tmpF);
+    }
+  }
+  listNewF.clear();
+}
+

@@ -31,7 +31,7 @@ namespace qkhull {
   typedef std::map<ptrVertex, ptrEdge> BorderEdgeMap;
   typedef BorderEdgeMap::iterator EdgeIterator;
 
-  enum class FaceStatus {notVisit, visited, borderland};
+  enum class FaceStatus {notVisited, visible, border};
 
   class Vertex {
     public:
@@ -69,7 +69,7 @@ namespace qkhull {
       // 正法线
       Eigen::Vector3d norm{0,0,0};
       // 表面访问标志
-      FaceStatus faceFlag = FaceStatus::notVisit;
+      FaceStatus faceFlag = FaceStatus::notVisited;
 
     public:
       Face() {
@@ -81,8 +81,9 @@ namespace qkhull {
       void setNorm(Eigen::Vector3d norm);
       bool isAbove(ptrVertex point);
       VertexIterator furthestVertex();
-      void visit();
-      bool isVisited();
+      bool visited();
+      void setVisible();
+      bool isVisible();
       void resetVisit();
       void setBorder();
       bool onBorder();
@@ -126,6 +127,19 @@ namespace qkhull {
   * @param : face: 待分配的表面
   */
   void allocOuterSet(VertexList& vertexList, FaceList& face);
+  /* 
+  * @func  : void deleteFace
+  * @brief : 
+  * @param : 
+  * @return: 
+  */
+  void removeVisibleFace(FaceList& listPendFace, FaceList& listFinishFace);
+  /* 
+  * @brief : 更新待定面集
+  * @param : 
+  * @return: 
+  */
+  void updatePendFace(FaceList& listNewF, FaceList& listPendF, FaceList& listFinishF);
   /* 
   * @brief : 宽度优先搜索：找最远点的可见面集
   * @param : furV: 最远点
