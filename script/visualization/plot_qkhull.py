@@ -18,7 +18,7 @@ if __name__ == "__main__":
     z = mat[2,:-4]
     ax.scatter(x,y,z)
     tetrahedron = mat[:,-4:]
-    #  plot_simplex(ax, tetrahedron)
+    plot_simplex(ax, tetrahedron)
 
     # 凸包数据
     mat = np.loadtxt("build/data/qkhull_hull").transpose()

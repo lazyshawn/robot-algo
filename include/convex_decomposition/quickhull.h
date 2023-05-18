@@ -53,7 +53,6 @@ namespace qkhull {
       std::vector<ptrFace> neighbor = std::vector<ptrFace>(2);
 
     public:
-      void init(ptrFace pFaceA, ptrFace pFaceB);
       void setEndpoints(ptrVertex pVtxA, ptrVertex pVtxB);
       void setNeighbors(ptrFace unvisibleFace, ptrFace visibleFce);
   };
@@ -114,7 +113,7 @@ namespace qkhull {
   * @return: 
   * @ref   : https://zhuanlan.zhihu.com/p/166105080
   */
-  void quickhull(const std::vector<Eigen::Vector3d>& set);
+  void quickhull(const std::vector<Eigen::Vector3d>& set, FaceList& cvxHull);
   /* 
   * @brief : 初始化四面体
   * @param : vertexList: 顶点链表

@@ -86,24 +86,6 @@ bool qkhull::Face::onBorder() {
   return false;
 }
 
-void qkhull::Edge::init(ptrFace pFaceA, ptrFace pFaceB) {
-  int idx = 0;
-  neighbor[0] = pFaceA;
-  neighbor[1] = pFaceB;
-  for (int i=0; i<3; ++i) {
-    for (int j=0; j<3; ++j) {
-      if ((pFaceA->vertex[i]->point - pFaceB->vertex[j]->point).squaredNorm() == 0) {
-        vertex[idx] = pFaceA->vertex[i];
-        idx++;
-        break;
-      }
-    }
-  }
-  if (idx == 3) {
-    printf("Warning: neighbors of a Edge is the same.\n");
-  }
-}
-
 void qkhull::Edge::setEndpoints(ptrVertex pVtxA, ptrVertex pVtxB) {
   vertex[0] = pVtxA;
   vertex[1] = pVtxB;
@@ -113,7 +95,7 @@ void qkhull::Edge::setNeighbors(ptrFace unvisibleFace, ptrFace visibleFce) {
   neighbor[1] = visibleFce;
 }
 
-void qkhull::quickhull(const std::vector<Eigen::Vector3d>& set) {
+void qkhull::quickhull(const std::vector<Eigen::Vector3d>& set, FaceList& cvxHull) {
   // 复制所有点到初始点集
   VertexList vertexList;
   std::shared_ptr<Vertex> tmpVtx;
@@ -124,29 +106,13 @@ void qkhull::quickhull(const std::vector<Eigen::Vector3d>& set) {
   }
 
   // 初始化四面体
-  FaceList tetrahedron, cvxHull;
-  std::cout << "===> initTetrahedron:" << std::endl;
+  FaceList tetrahedron;
   initTetrahedron(vertexList, tetrahedron);
 
-  std::cout << "\nnorm of plane:" << std::endl;
-  for (FaceIterator ite = tetrahedron.begin(); ite != tetrahedron.end(); ++ite) {
-    std::cout << "norm = " << (*ite)->norm.transpose() << std::endl;
-  }
-
   // 分配外部点集
-  std::cout << "\n===> allocOuterSet:" << std::endl;
   allocOuterSet(vertexList, tetrahedron);
 
-  int numOutPoint=0;
-  for (auto& ptrF : tetrahedron) {
-    int tmpOuterPoint = ptrF->pOuterSet->vertexList.size();
-    numOutPoint += tmpOuterPoint;
-    std::cout << "Size of outer point: " << tmpOuterPoint << std::endl;
-  }
-  std::cout << "Total num of outer point: " << numOutPoint << std::endl;
-
   // 更新待定面集
-  std::cout << "\n===> Setting Pending Face:" << std::endl;
   FaceList pendFace;
   updatePendFace(tetrahedron, pendFace, cvxHull);
 
@@ -162,17 +128,13 @@ void qkhull::quickhull(const std::vector<Eigen::Vector3d>& set) {
     (*pendF)->pOuterSet->vertexList.erase(iteFurV);
 
     // 找最远点的可见面，以及临界边
-    std::cout << "\n===> findVisibleFace:" << std::endl;
     findVisibleFace(pFurVtx, *pendF, listVisibleF, borderEdgeM);
 
     // 合并可见面的点集
-    std::cout << "\n===> gatherOuterSet:" << std::endl;
     VertexList visOuterSet;
     gatherOuterSet(listVisibleF, visOuterSet);
-    std::cout << "visOuterSet.size() = " << visOuterSet.size() << std::endl;
 
     // 从临界边构建新的表面
-    std::cout << "\n===> constractNewFace:" << std::endl;
     FaceList newFaceList;
     constractNewFace(pFurVtx, borderEdgeM, newFaceList);
 
@@ -186,13 +148,6 @@ void qkhull::quickhull(const std::vector<Eigen::Vector3d>& set) {
     updatePendFace(newFaceList, pendFace, cvxHull);
   } // while (!pendFace.empty())
 
-  std::cout << "cvxHull.size() = " << cvxHull.size() << std::endl;
-  std::ofstream ofile("build/data/qkhull_hull", std::ios::trunc);
-  for (FaceIterator iteF=cvxHull.begin(); iteF!=cvxHull.end(); ++iteF) {
-    for (int i=0; i<3; ++i) {
-      ofile << (*iteF)->vertex[i]->point.transpose() << std::endl;
-    }
-  }
 } // qkhull::quickhull()
 
 // 初始化四面体，找尽可能大的四面体
@@ -218,8 +173,6 @@ void qkhull::initTetrahedron(VertexList& vertexList, FaceList& tetrahedron) {
       iteVtx[1] = ((*ite)->point[1] > (*iteVtx[0])->point[1]) ? ite : iteVtx[0];
     }
   }
-  // std::cout << (*iteVtx[0])->point.transpose() << std::endl;
-  // std::cout << (*iteVtx[1])->point.transpose() << std::endl;
 
   Eigen::Vector3d dir = (*iteVtx[1])->point - (*iteVtx[0])->point;
   Eigen::Vector3d tmpPoint{dir[2],dir[0],dir[1]};
@@ -236,7 +189,6 @@ void qkhull::initTetrahedron(VertexList& vertexList, FaceList& tetrahedron) {
       maxProj = tmpProj;
     }
   }
-  // std::cout << (*iteVtx[2])->point.transpose() << std::endl;
 
   Eigen::Vector3d ab, ac, normABC;
   ab = (*iteVtx[1])->point - (*iteVtx[0])->point;
@@ -252,7 +204,6 @@ void qkhull::initTetrahedron(VertexList& vertexList, FaceList& tetrahedron) {
       maxProj = tmpProj;
     }
   }
-  // std::cout << (*iteVtx[3])->point.transpose() << std::endl;
 
   std::ofstream ofile("build/data/qkhull_points", std::ios::app);
   ofile << (*iteVtx[0])->point.transpose() << std::endl;
@@ -412,7 +363,6 @@ void qkhull::removeVisibleFace(FaceList& listPendFace, FaceList& listFinishFace)
     iteTmpF = iteF;
     iteTmpF++;
     if ((*iteF)->faceFlag==FaceStatus::visible) {
-      std::cout << "Face visiable" << std::endl;
       listPendFace.erase(iteF);
     }
     iteF = iteTmpF;
@@ -421,7 +371,6 @@ void qkhull::removeVisibleFace(FaceList& listPendFace, FaceList& listFinishFace)
     iteTmpF = iteF;
     iteTmpF++;
     if ((*iteF)->faceFlag==FaceStatus::visible) {
-      std::cout << "Face visiable" << std::endl;
       listFinishFace.erase(iteF);
     }
     iteF = iteTmpF;
