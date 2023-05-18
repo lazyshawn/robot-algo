@@ -3,12 +3,12 @@ if [[ -z $1 ]]; then
 mkdir -p build
 cd build
 cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1 ..
-make
+make -j12
 elif [[ "$1" == "install" ]]; then
 mkdir -p build
 cd build
 cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1 ..
-sudo make install
+make install -j12
 elif [[ "$1" == "debug" ]]; then
 mkdir -p debug
 cd debug
