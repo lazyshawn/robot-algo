@@ -4,7 +4,7 @@ add_library(quickhull SHARED
 )
 include_directories(${PROJECT_SOURCE_DIR}/include)
 # Specify the dependencies for a lib
-target_link_libraries(quickhull algebra)
+target_link_libraries(quickhull algebra user_interface)
 # Usage requirement of lib
 target_include_directories(quickhull
   INTERFACE ${PROJECT_SOURCE_DIR}/include
