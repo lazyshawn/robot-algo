@@ -19,16 +19,15 @@ void Timer::clear() {
 
 
 // 从开始到当前的毫秒数
-std::chrono::duration<double, std::milli> Timer::time_since_starting() {
-  std::chrono::time_point<std::chrono::system_clock> cur;
-  cur = std::chrono::system_clock::now();
-  return cur - starting;
+double Timer::ms_since_starting() {
+  using namespace std::chrono;
+  time_point<system_clock> cur = system_clock::now();
+  return (cur - starting).count();
 }
 
 // 从上次计时到当前的毫秒数
-std::chrono::duration<double, std::milli> Timer::time_since_last() {
-  std::chrono::time_point<std::chrono::system_clock> cur;
-  cur = std::chrono::system_clock::now();
-  return cur - *(timestamp.end()-1);
+double Timer::ms_since_last() {
+  using namespace std::chrono;
+  time_point<system_clock> cur = system_clock::now();
+  return (cur - *(timestamp.end() - 1)).count();
 }
-

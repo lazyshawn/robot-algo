@@ -15,7 +15,7 @@ class Timer {
   void start();
   void record();
   void clear();
-  std::chrono::duration<double, std::milli> time_since_starting();
-  std::chrono::duration<double, std::milli> time_since_last();
+  double ms_since_starting();
+  double ms_since_last();
 };
 

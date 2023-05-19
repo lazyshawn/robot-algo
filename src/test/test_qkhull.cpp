@@ -25,8 +25,8 @@ int main(int argc, char** argv) {
   qkhull::FaceList cvxHull;
   timer.start();
   qkhull::quickhull(set, cvxHull);
-  std::chrono::duration<double, std::milli> usageTime = timer.time_since_last();
-  std::cout << "Total time: " << usageTime.count() << "ms" << std::endl;
+  double usageTime = timer.ms_since_last();
+  std::cout << "Total time: " << usageTime << "ms" << std::endl;
 
   // 记录凸包表面
   std::ofstream hullFile("build/data/qkhull_hull", std::ios::trunc);
