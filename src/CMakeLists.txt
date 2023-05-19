@@ -1,3 +1,4 @@
+add_subdirectory(user_interface)
 add_subdirectory(geometry)
 add_subdirectory(collision_detection)
 add_subdirectory(convex_decomposition)
