@@ -1,10 +1,11 @@
 #include "convex_decomposition/convex_decomposition.h"
-#include <iostream>
+#include "user_interface/user_interface.h"
 
 #include <random>
 #include <ctime>
 
 int main(int argc, char** argv) {
+  Timer timer;
   std::vector<Eigen::Vector3d> set;
 
   std::default_random_engine generator(time(0));
@@ -14,7 +15,7 @@ int main(int argc, char** argv) {
   std::ofstream pointFile("build/data/qkhull_points", std::ios::trunc);
  
   // ramdom matrix
-  Eigen::MatrixXd randomMat = Eigen::MatrixXd::NullaryExpr(3,100,normal);
+  Eigen::MatrixXd randomMat = Eigen::MatrixXd::NullaryExpr(3,10,normal);
   for (int i=0; i<randomMat.cols(); ++i) {
     set.emplace_back(randomMat.col(i));
     pointFile << set[i].transpose() << std::endl;
@@ -22,7 +23,10 @@ int main(int argc, char** argv) {
   std::cout << randomMat << "\n" << std::endl;
 
   qkhull::FaceList cvxHull;
+  timer.start();
   qkhull::quickhull(set, cvxHull);
+  double usageTime = timer.ms_since_last();
+  std::cout << "Total time: " << usageTime << "ms" << std::endl;
 
   // 记录凸包表面
   std::ofstream hullFile("build/data/qkhull_hull", std::ios::trunc);
