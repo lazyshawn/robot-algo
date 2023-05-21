@@ -1,6 +1,7 @@
 # user_interface_lib
 add_library(user_interface SHARED
   timer.cpp
+  random.cpp
 )
 include_directories(${PROJECT_SOURCE_DIR}/include)
 # Usage requirement of lib
@@ -14,7 +15,7 @@ file(GLOB_RECURSE user_interface_headers
   ${PROJECT_SOURCE_DIR}/include/user_interface/*.h
 )
 install(FILES ${user_interface_headers} DESTINATION 
-  ${PROJECT_BINARY_DIR}/out/include/geometry
+  ${PROJECT_BINARY_DIR}/out/include/user_interface
 )
 
 # Install all lib in the package
