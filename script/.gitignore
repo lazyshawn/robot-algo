@@ -5,3 +5,4 @@ lib64
 share/*
 */__pycache__
 pyvenv.cfg
+etc

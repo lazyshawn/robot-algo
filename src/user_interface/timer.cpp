@@ -22,12 +22,12 @@ void Timer::clear() {
 double Timer::ms_since_starting() {
   using namespace std::chrono;
   time_point<system_clock> cur = system_clock::now();
-  return (cur - starting).count();
+  return duration_cast<duration<double,std::milli>>(cur - starting).count();
 }
 
 // 从上次计时到当前的毫秒数
 double Timer::ms_since_last() {
   using namespace std::chrono;
   time_point<system_clock> cur = system_clock::now();
-  return (cur - *(timestamp.end() - 1)).count();
+  return duration_cast<duration<double,std::milli>>(cur - *(timestamp.end()-1)).count();
 }
