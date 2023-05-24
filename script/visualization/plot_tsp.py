@@ -38,12 +38,13 @@ if __name__ == "__main__":
     begNodeIdx = 0
     salemenIdx = 0
     for ii in range(numNode):
+        # 起始点
         if (ii == begNodeIdx):
             x = [mat[0, salemenIdx], mat[0, ii+numSalemen]]
             y = [mat[1, salemenIdx], mat[1, ii+numSalemen]]
             z = [mat[2, salemenIdx], mat[2, ii+numSalemen]]
             ax.plot(x,y,z, c=colorMap[salemenIdx])
-
+            # 跳过访问0个城市的商人
             while (True):
                 print(salemenIdx)
                 begNodeIdx += vistNum[salemenIdx]
