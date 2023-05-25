@@ -23,19 +23,24 @@ int main(int argc, char **argv) {
 
   std::cout << "\n===> Initial Generation:" << std::endl;
   // 模型参数
-  int groupSize = 200, generations = 1e3;
-  double crossoverProb = 0.2;
+  int groupSize = 200, generations = 1e5;
+  double crossoverProb = 0.2, mutationProb = 0.1;
 
   // 初始化种群
-  mtsp.ga_init_population(groupSize, generations, crossoverProb);
+  mtsp.ga_init_population(groupSize, generations, crossoverProb, mutationProb);
+
+  // 评估个体适应性
+  std::cout << "\n===> Fitness function:" << std::endl;
+  for (int i=0; i<groupSize; ++i) {
+    mtsp.ga_evaluate_fitness(mtsp.population[i]);
+  }
+  mtsp.ga_fitness_statistics();
+
   for (int i=0; i<5; ++i) {
     std::cout << mtsp.population[i] << std::endl;
   }
   std::cout << "..." << std::endl;
-
-  // 评估个体适应性
-  std::cout << "\n===> Fitness function:" << std::endl;
-  mtsp.ga_evaluate_fitness();
+  // mtsp.ga_evaluate_fitness();
 
   std::cout << "minCost = " << mtsp.minCost << std::endl;
   std::cout << "maxCost = " << mtsp.maxCost << std::endl;
@@ -45,7 +50,8 @@ int main(int argc, char **argv) {
 
   int mateSize = 2*floor(groupSize*crossoverProb);
   // 迭代次数
-  for (int ite=0; ite<1e4; ++ite) {
+  for (int ite=0; ite<generations; ++ite) {
+    mtsp.ga_fitness_statistics();
     // 根据适应度生成轮盘
     mtsp.ga_update_roulette_wheel();
 
@@ -55,6 +61,10 @@ int main(int argc, char **argv) {
     mtsp.ga_evaluate_fitness(sister);
     Indivisual brother = mtsp.ga_crossover_tcx(mtsp.population[idxMon], mtsp.population[idxDad]);
     mtsp.ga_evaluate_fitness(brother);
+
+    // 变异
+    mtsp.ga_mutation(sister);
+    mtsp.ga_mutation(brother);
 
     // 替换
     int maxParent = mtsp.population[idxMon].fitness > mtsp.population[idxDad].fitness ? idxMon : idxDad;

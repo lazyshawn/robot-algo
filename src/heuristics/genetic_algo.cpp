@@ -130,26 +130,48 @@ void MTSPModel::calc_cost_matrix() {
   }
 }
 
-void MTSPModel::ga_init_population(int groupSize_, int generations_, double crossoverProb_) {
+void MTSPModel::ga_random_indivisual(Indivisual& ind) {
+  // 生成访问顺序
+  ind.firstGene = get_random_permutation(numCity);
+  std::vector<int> index(numCity);
+  for (int j=0; j<numCity; ++j) {
+    index[ind.firstGene[j]] = j;
+  }
+  ind.index = index;
+  // 生成分配序列
+  ind.secondGene = get_sequence_with_sum(numCity, numSalemen);
+}
+
+void MTSPModel::ga_init_population(int groupSize_, int generations_, double crossoverProb_, double mutationProb_) {
+  // 初始化遗传算法参数
   groupSize = groupSize_;
   generations = generations_;
   crossoverProb = crossoverProb_;
+  mutationProb = mutationProb_;
 
-  minCost = 999;
-  optimum_first = std::vector<int>(numCity), optimum_second = std::vector<int>(numSalemen);
-  selection_pool = std::vector<int>(groupSize*crossoverProb), replacement_pool = std::vector<int>(groupSize*crossoverProb);
+  optimumInd = Indivisual();
+  optimumInd.fitness = 999;
 
+  // 种群初始化
   population = std::vector<Indivisual>(groupSize, Indivisual(numCity, numSalemen));
   for (int i = 0; i < groupSize; ++i) {
-    // 生成访问顺序
-    population[i].firstGene = get_random_permutation(numCity);
-    std::vector<int> index(numCity);
-    for (int j=0; j<numCity; ++j) {
-      index[population[i].firstGene[j]] = j;
+    ga_random_indivisual(population[i]);
+  }
+}
+
+void MTSPModel::ga_fitness_statistics() {
+  // 统计个体适应性
+  minCost = 99999, maxCost = 0; sumCost = 0;
+  for (int i=0; i<groupSize; ++i) {
+    double tmpCost = population[i].fitness;
+    sumCost += tmpCost;
+    // 更新本次迭代后的最大值和最小值
+    if (tmpCost < minCost) {
+      minCost = tmpCost;
+      optimumInd = population[i];
+    } else if (tmpCost > maxCost) {
+      maxCost = tmpCost;
     }
-    population[i].index = index;
-    // 生成分配序列
-    population[i].secondGene = get_sequence_with_sum(numCity, numSalemen);
   }
 }
 
@@ -173,32 +195,7 @@ double MTSPModel::ga_evaluate_fitness(Indivisual& ind) {
   return ind.fitness;
 }
 
-void MTSPModel::ga_evaluate_fitness() {
-  // 评估个体适应性
-  for (int i=0; i<groupSize; ++i) {
-    ga_evaluate_fitness(population[i]);
-  }
-  // 个体适应性统计
-  double tmpCost;
-  sumCost = 0;
-  for (int i=0; i<groupSize; ++i) {
-    tmpCost = population[i].fitness;
-    maxCost = std::max(maxCost, tmpCost);
-    sumCost += tmpCost;
-    if (tmpCost < minCost) {
-      minCost = tmpCost;
-      optimumInd = population[i];
-      optimum_first = population[i].firstGene;
-      optimum_second = population[i].secondGene;
-    }
-  }
-}
-
 void MTSPModel::ga_update_roulette_wheel() {
-  sumCost = 0;
-  for (int i=0; i<groupSize; ++i) {
-    sumCost += population[i].fitness;
-  }
   for (int i=0; i<groupSize; ++i) {
     population[i].wheelPartion = population[i].fitness/sumCost;
   }
@@ -293,3 +290,23 @@ Indivisual MTSPModel::ga_crossover_tcx(Indivisual mon, Indivisual dad) {
   return sister;
 }
 
+void MTSPModel::ga_mutation(Indivisual& ind) {
+  // 判断变异概率
+  double prob = get_uniform_double();
+  if (prob > mutationProb) return;
+
+  std::vector<int> segmentCity = get_uniform(numCity, 2);
+  std::vector<int> segmentSalemen = get_uniform(numSalemen, 2);
+  // 第一部分变异
+  if (segmentCity[0] - segmentCity[1] != 0) {
+    int tmp = ind.firstGene[segmentCity[0] - 1];
+    ind.firstGene[segmentCity[0] - 1] = ind.firstGene[segmentCity[1] - 1];
+    ind.firstGene[segmentCity[1] - 1] = tmp;
+  }
+  // 第二部分变异
+  if (segmentSalemen[0] - segmentSalemen[1] != 0) {
+    int tmp = ind.secondGene[segmentSalemen[0] - 1];
+    ind.secondGene[segmentSalemen[0] - 1] = ind.secondGene[segmentSalemen[1] - 1];
+    ind.secondGene[segmentSalemen[1] - 1] = tmp;
+  }
+}

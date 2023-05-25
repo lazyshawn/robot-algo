@@ -46,23 +46,85 @@ public:
   // GA related
   int groupSize, generations;
   double crossoverProb, mutationProb;
+  // population
   std::vector<Indivisual> population;
-  std::vector<double> rouletteWheel;
   Indivisual optimumInd;
-  double optimumCost;
+  std::vector<double> rouletteWheel;
   double minCost, maxCost, sumCost;
-  std::vector<int> optimum_first, optimum_second;
   std::vector<int> selection_pool, replacement_pool;
 
 public:
   MTSPModel(int numCity_, int numSalemen_);
+  /* 
+  * @brief : 
+  * @param : 
+  * @return: 
+  */
   void calc_cost_matrix();
-  void ga_init_population(int groupSize_, int generations_, double crossoverProb_);
+  /* 
+  * @brief : 
+  * @param : 
+  * @return: 
+  */
+  void ga_init_population(int groupSize_, int generations_, double crossoverProb_, double mutationProb_);
+  /* 
+  * @brief : 
+  * @param : 
+  * @return: 
+  */
+  /* 
+  * @brief : 
+  * @param : 
+  * @return: 
+  */
+  void ga_random_indivisual(Indivisual& ind);
+  /* 
+  * @brief : 
+  * @param : 
+  * @return: 
+  */
+  void ga_fitness_statistics();
+  /* 
+  * @brief : 
+  * @param : 
+  * @return: 
+  */
   double ga_evaluate_fitness(Indivisual& ind);
+  /* 
+  * @brief : 
+  * @param : 
+  * @return: 
+  */
   void ga_evaluate_fitness();
+  /* 
+  * @brief : 
+  * @param : 
+  * @return: 
+  */
   void ga_update_roulette_wheel();
+  /* 
+  * @brief : 
+  * @param : 
+  * @return: 
+  */
   int ga_roll_wheel();
+  /* 
+  * @brief : 
+  * @param : 
+  * @return: 
+  */
   void ga_crossover();
+  /* 
+  * @brief : 
+  * @param : 
+  * @return: 
+  */
   Indivisual ga_crossover_tcx(Indivisual mon, Indivisual dad);
+  /* 
+  * @brief : 
+  * @param : 
+  * @return: 
+  */
+  void ga_mutation(Indivisual& ind);
 };
 
