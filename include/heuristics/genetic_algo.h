@@ -4,6 +4,7 @@
 #include <random>
 #include <vector>
 #include <chrono>
+#include <limits>
 
 #include <eigen3/Eigen/Dense>
 
@@ -42,6 +43,7 @@ public:
   int numCity, numSalemen;
   std::vector<Eigen::Vector3d> depot, city;
   Eigen::MatrixXd costMat;
+  double minCost, maxCost;
 
   // GA related
   int groupSize, generations;
@@ -50,7 +52,7 @@ public:
   std::vector<Indivisual> population;
   Indivisual optimumInd;
   std::vector<double> rouletteWheel;
-  double minCost, maxCost, sumCost;
+  double minFitness, maxFitness, sumFitness;
   std::vector<int> selection_pool, replacement_pool;
 
 public:
@@ -84,6 +86,18 @@ public:
   * @return: 
   */
   void ga_fitness_statistics();
+  /* 
+  * @brief : 
+  * @param : 
+  * @return: 
+  */
+  double ga_total_dist(Indivisual ind);
+  /* 
+  * @brief : 
+  * @param : 
+  * @return: 
+  */
+  int ga_load_balance(Indivisual ind);
   /* 
   * @brief : 
   * @param : 

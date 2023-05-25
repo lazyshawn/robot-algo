@@ -11,7 +11,13 @@ int main(int argc, char **argv) {
 
   // 生成随机点
   Eigen::MatrixXd begPoints = get_random_matrix(3, numSalemen, 0, 20);
+  begPoints << -20, -20, 20, 20,
+               -20, 20, -20, 20,
+               -20, -20, -20, -20;
   Eigen::MatrixXd viaPoints = get_random_matrix(3, numNode, 0, 10);
+  // for (int i=0; i<viaPoints.cols(); ++i) {
+  //   viaPoints.col(i)[2] = 0;
+  // }
   std::cout << "Depots:\n" << begPoints << "\n" << std::endl;
   std::cout << "Cities:\n" << viaPoints << "\n" << std::endl;
   for (int i=0; i<numNode; ++i) mtsp.city[i] = viaPoints.col(i);
@@ -25,6 +31,7 @@ int main(int argc, char **argv) {
   // 模型参数
   int groupSize = 200, generations = 1e5;
   double crossoverProb = 0.2, mutationProb = 0.1;
+  std::vector<double> optRec;
 
   // 初始化种群
   mtsp.ga_init_population(groupSize, generations, crossoverProb, mutationProb);
@@ -42,9 +49,10 @@ int main(int argc, char **argv) {
   std::cout << "..." << std::endl;
   // mtsp.ga_evaluate_fitness();
 
-  std::cout << "minCost = " << mtsp.minCost << std::endl;
-  std::cout << "maxCost = " << mtsp.maxCost << std::endl;
-  std::cout << "meanCost = " << mtsp.sumCost/groupSize << std::endl;
+  std::cout << "minCost = " << mtsp.minFitness << std::endl;
+  std::cout << "maxCost = " << mtsp.maxFitness << std::endl;
+  std::cout << "meanCost = " << mtsp.sumFitness/groupSize << std::endl;
+  optRec.push_back(mtsp.optimumInd.fitness);
 
   std::cout << "\n===> Begin iteration:" << std::endl;
 
@@ -77,11 +85,14 @@ int main(int argc, char **argv) {
     // 更新最优解
     if (mtsp.population[maxParent].fitness < mtsp.optimumInd.fitness) {
       mtsp.optimumInd = mtsp.population[maxParent];
+      optRec.push_back(mtsp.optimumInd.fitness);
     }
   }
 
   std::cout << mtsp.optimumInd << std::endl;
-
+  for (int i=0; i<optRec.size(); ++i) {
+    std::cout << optRec[i] << std::endl;
+  }
 
 
 
@@ -104,15 +115,6 @@ int main(int argc, char **argv) {
   }
   for (int i=0; i<mtsp.optimumInd.secondGene.size(); ++i) {
     resultFile << mtsp.optimumInd.secondGene[i] << std::endl;
-  }
-
-  // 保存原始点(与点序列对应)
-  std::ofstream rawPointF("build/data/qkhull_ga_raw_points", std::ios::trunc);
-  for (int i = 0; i < numSalemen; ++i) {
-    rawPointF << begPoints.col(i).transpose() << std::endl;
-  }
-  for (int i = 0; i < numNode; ++i) {
-    rawPointF << viaPoints.col(i).transpose() << std::endl;
   }
 
   // 按访问顺序保存随机点

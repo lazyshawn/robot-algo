@@ -1,6 +1,9 @@
 #include "heuristics/genetic_algo.h"
 #include <iostream>
 
+const double posInf = std::numeric_limits<double>::infinity();
+const double negInf = -std::numeric_limits<double>::infinity();
+
 std::vector<int> get_random_permutation(int num) {
   // 1~n 的初始队列
   std::vector<int> array(num);
@@ -115,17 +118,24 @@ MTSPModel::MTSPModel(int numCity_, int numSalemen_) {
 
   depot = std::vector<Eigen::Vector3d>(numSalemen);
   city = std::vector<Eigen::Vector3d>(numCity);
-  costMat = Eigen::MatrixXd::Identity(numCity, numCity) * 999;
+  costMat = Eigen::MatrixXd::Identity(numCity, numCity) * posInf;
 }
 
 
 void MTSPModel::calc_cost_matrix() {
-  double maxDist=-1.0, minDist=999;
+  double maxDist=-1.0, minDist=posInf;
+  maxCost = negInf; minCost = posInf;
   std::cout << "Cost Matrix:" << std::endl;
   for (int i = 0; i < city.size(); ++i) {
     for (int j = i + 1; j < city.size(); ++j) {
       double dist = (city[i] - city[j]).norm();
       costMat(i, j) = costMat(j, i) = dist;
+      // 更新最大和最小距离
+      if (dist > maxCost) {
+        maxCost = dist;
+      } else if (dist < minCost) {
+        minCost = dist;
+      }
     }
   }
 }
@@ -150,7 +160,7 @@ void MTSPModel::ga_init_population(int groupSize_, int generations_, double cros
   mutationProb = mutationProb_;
 
   optimumInd = Indivisual();
-  optimumInd.fitness = 999;
+  optimumInd.fitness = posInf;
 
   // 种群初始化
   population = std::vector<Indivisual>(groupSize, Indivisual(numCity, numSalemen));
@@ -161,43 +171,67 @@ void MTSPModel::ga_init_population(int groupSize_, int generations_, double cros
 
 void MTSPModel::ga_fitness_statistics() {
   // 统计个体适应性
-  minCost = 99999, maxCost = 0; sumCost = 0;
+  minFitness = posInf, maxFitness = 0; sumFitness = 0;
   for (int i=0; i<groupSize; ++i) {
     double tmpCost = population[i].fitness;
-    sumCost += tmpCost;
+    sumFitness += tmpCost;
     // 更新本次迭代后的最大值和最小值
-    if (tmpCost < minCost) {
-      minCost = tmpCost;
+    if (tmpCost < minFitness) {
+      minFitness = tmpCost;
       optimumInd = population[i];
-    } else if (tmpCost > maxCost) {
-      maxCost = tmpCost;
+    } else if (tmpCost > maxFitness) {
+      maxFitness = tmpCost;
     }
   }
 }
 
-double MTSPModel::ga_evaluate_fitness(Indivisual& ind) {
+double MTSPModel::ga_total_dist(Indivisual ind) {
   int begNodeIdx = 0, salemenIdx = 0;
-  for (int j=0; j<numCity; ++j) {
+  for (int i=0; i<numCity; ++i) {
+    // 跳过访问0城市的商人
+    while (salemenIdx < numSalemen && ind.secondGene[salemenIdx] == 0) {
+      salemenIdx++;
+    }
     // 当前城市是商人出发后的第一个城市
-    if (j == begNodeIdx) {
-      ind.fitness += (city[ind.firstGene[j]] - depot[salemenIdx]).norm();
-      // 跳过访问0城市的商人
-      do {
-      // 下个商人的第一个城市的索引
-        begNodeIdx += ind.secondGene[salemenIdx];
-        salemenIdx++;
-      } while (ind.secondGene[salemenIdx] == 0);
+    if (i == begNodeIdx) {
+      ind.fitness += (city[ind.firstGene[i]] - depot[salemenIdx]).norm();
+      begNodeIdx += ind.secondGene[salemenIdx];
+      salemenIdx++;
     }
     else {
-      ind.fitness += costMat(ind.firstGene[j-1], ind.firstGene[j]);
+      ind.fitness += costMat(ind.firstGene[i-1], ind.firstGene[i]);
     }
   }
   return ind.fitness;
 }
 
+int MTSPModel::ga_load_balance(Indivisual ind) {
+  int maxNum = 0, minNum = numCity;
+  for (int i=0; i<numSalemen; ++i) {
+    int curNum = ind.secondGene[i];
+    if ( curNum > maxNum) {
+      maxNum = curNum;
+    }
+    if (curNum < minNum) {
+      minNum = curNum;
+    }
+  }
+  return (maxNum - minNum);
+}
+
+double MTSPModel::ga_evaluate_fitness(Indivisual& ind) {
+  double distFit = 0.0, balanceFit = 0.0, weight = 2 * maxCost / numCity;
+  // 总距离
+  distFit = ga_total_dist(ind);
+  // 均匀度
+  balanceFit = ga_load_balance(ind);
+  ind.fitness = distFit + balanceFit * weight;
+  return ind.fitness;
+}
+
 void MTSPModel::ga_update_roulette_wheel() {
   for (int i=0; i<groupSize; ++i) {
-    population[i].wheelPartion = population[i].fitness/sumCost;
+    population[i].wheelPartion = population[i].fitness/sumFitness;
   }
 }
 
