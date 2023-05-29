@@ -1,6 +1,6 @@
-#include "heuristics/genetic_algo.h"
+#include "genetic_algo.h"
 
-#include "user_interface/user_interface.h"
+#include "user_interface.h"
 
 // TSP 问题建模
 int main(int argc, char **argv) {
@@ -56,7 +56,6 @@ int main(int argc, char **argv) {
 
   std::cout << "\n===> Begin iteration:" << std::endl;
 
-  int mateSize = 2*floor(groupSize*crossoverProb);
   // 迭代次数
   for (int ite=0; ite<generations; ++ite) {
     mtsp.ga_fitness_statistics();
@@ -90,30 +89,17 @@ int main(int argc, char **argv) {
   }
 
   std::cout << mtsp.optimumInd << std::endl;
-  for (int i=0; i<optRec.size(); ++i) {
+  for (int i = 0; i < static_cast<int>(optRec.size()); ++i) {
     std::cout << optRec[i] << std::endl;
   }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
   // 保存节点数量、访问顺序、分配序列
   std::ofstream resultFile("build/data/qkhull_ga_result", std::ios::trunc);
   resultFile << numNode << "\n" << numSalemen << std::endl;
-  for (int i=0; i<mtsp.optimumInd.firstGene.size(); ++i) {
+  for (int i = 0; i < static_cast<int>(mtsp.optimumInd.firstGene.size()); ++i) {
     resultFile << mtsp.optimumInd.firstGene[i] << std::endl;
   }
-  for (int i=0; i<mtsp.optimumInd.secondGene.size(); ++i) {
+  for (int i = 0; i < static_cast<int>(mtsp.optimumInd.secondGene.size()); ++i) {
     resultFile << mtsp.optimumInd.secondGene[i] << std::endl;
   }
 

@@ -5,6 +5,7 @@
 #include <vector>
 #include <chrono>
 #include <limits>
+#include <iostream>
 
 #include <eigen3/Eigen/Dense>
 

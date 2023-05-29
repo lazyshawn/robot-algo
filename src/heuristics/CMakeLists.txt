@@ -2,10 +2,10 @@
 add_library(genetic_algo SHARED
   genetic_algo.cpp
 )
-include_directories(${PROJECT_SOURCE_DIR}/include)
+include_directories(${PROJECT_SOURCE_DIR}/include/heuristics)
 # Usage requirement of lib
 target_include_directories(genetic_algo
-  INTERFACE ${PROJECT_SOURCE_DIR}/include
+  INTERFACE ${PROJECT_SOURCE_DIR}/include/heuristics
 )
 # Specify the dependencies for a lib
 # target_link_libraries(genetic_algo -lpthread)

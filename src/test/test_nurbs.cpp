@@ -3,8 +3,8 @@
 #include <random>
 #include <chrono>
 
-#include "path_planning/nurbs.h"
-#include "user_interface/user_interface.h"
+#include "nurbs.h"
+#include "user_interface.h"
 
 void test_curve();
 void test_surface();

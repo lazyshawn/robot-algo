@@ -1,11 +1,11 @@
-# collistion_detection_lib
+# collision_detection_lib
 add_library(gjk SHARED
   gjk.cpp
 )
-include_directories(${PROJECT_SOURCE_DIR}/include)
+include_directories(${PROJECT_SOURCE_DIR}/include/collision_detection)
 # Usage requirement of lib
 target_include_directories(gjk
-  INTERFACE ${PROJECT_SOURCE_DIR}/include
+  INTERFACE ${PROJECT_SOURCE_DIR}/include/collision_detection
 )
 # Install include
 file(GLOB_RECURSE COLLISION_DETECTION_HEADERS
@@ -16,7 +16,7 @@ install(FILES ${COLLISION_DETECTION_HEADERS} DESTINATION
 )
 
 # Install all lib in the package
-set(collistion_detection_libs gjk)
-install(TARGETS ${collistion_detection_libs} LIBRARY DESTINATION 
+set(collision_detection_libs gjk)
+install(TARGETS ${collision_detection_libs} LIBRARY DESTINATION 
   ${PROJECT_BINARY_DIR}/out/lib/collision_detection
 )
