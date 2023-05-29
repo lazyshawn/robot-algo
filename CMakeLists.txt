@@ -5,6 +5,7 @@ set(CMAKE_CXX_STANDARD 17)
 # Support degug
 SET(CMAKE_CXX_FLAGS_DEBUG "$ENV{CXXFLAGS} -O0 -Wall -g2 -ggdb")
 SET(CMAKE_CXX_FLAGS_RELEASE {CXXFLAGS} -O3 -Wall)
+SET(CMAKE_BUILD_TYPE "Debug")
 
 # RPATH settings for install
 # https://stackoverflow.com/questions/22206122
