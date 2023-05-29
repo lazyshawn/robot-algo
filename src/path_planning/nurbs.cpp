@@ -2,27 +2,30 @@
 
 #include <iostream>
 
-NURBS_Curve::NURBS_Curve(int num, int order_) {
-  order = order_, degree = order - 1;
-  // ctrlPoints = std::vector<Eigen::Vector3d>(num);
-  weight = std::vector<double>(num);
-  scaledWeight = std::vector<double>(num);
-  knots = std::vector<double>(num + order);
-}
-
-void NURBS_Curve::set_pinned_uniform_knots() {
+void set_pinned_uniform_knots(std::vector<double>& knots, int num, int order) {
   double knotValue = 0.0;
   for (int i=0; i<order; ++i) {
     knots[i] = knotValue;
   }
-  for (int i=order; i<ctrlPoints.size(); ++i) {
+  for (int i=order; i<num; ++i) {
     knotValue++;
     knots[i] = knotValue;
   }
   knotValue++;
-  for (int i=ctrlPoints.size(); i<knots.size(); ++i) {
+  for (int i=num; i<knots.size(); ++i) {
     knots[i] = knotValue;
   }
+}
+
+NURBS_Curve::NURBS_Curve(int num, int order_) {
+  order = order_, degree = order - 1;
+  ctrlPoints = std::vector<Eigen::Vector3d>(num);
+  weight = std::vector<double>(num);
+  knots = std::vector<double>(num + order);
+}
+
+void NURBS_Curve::set_pinned_uniform_knots() {
+  ::set_pinned_uniform_knots(knots, static_cast<int>(ctrlPoints.size()), order);
 }
 
 double NURBS_Curve::basis_function(int idx, int degree_, double u) {
@@ -57,11 +60,19 @@ double NURBS_Curve::basis_function(int idx, int degree_, double u) {
 }
 
 double NURBS_Curve::basis_function(int idx, double u) {
+  // 处理超出区间范围的参数值
+  if (u > knots[ctrlPoints.size()]) {
+    printf("-- Warning: u = %f is out of range [u_order, u_num], set to u_num.\n", u);
+    u = knots[ctrlPoints.size()];
+  } else if (u < knots[degree]) {
+    printf("-- Warning: u = %f is out of range [u_order, u_num], set to u_order.\n", u);
+    u = knots[degree];
+  }
+
   return basis_function(idx, degree, u);
 }
 
-Eigen::Vector3d NURBS_Curve::get_point(double u) {
-  // 确定参数所属的节点跨度区间
+int NURBS_Curve::find_knot_span(double u) {
   int idx = 0;
   for (int i=0; i<knots.size(); ++i) {
     if (knots[i] <= u && knots[i+1] > u) {
@@ -74,18 +85,57 @@ Eigen::Vector3d NURBS_Curve::get_point(double u) {
       break;
     }
   }
+  return idx;
+}
+
+Eigen::Vector3d NURBS_Curve::get_point(double u) {
+  // 确定参数所属的节点跨度区间
+  int idx = find_knot_span(u);
 
   // 计算激活的控制点的贡献值 (order 个)
   double sum = 0.0;
   Eigen::Vector3d point{0,0,0};
-  for (int i = 0; i < order; ++i) {
-    double tmp = basis_function(idx - i,u) * weight[idx - i];
-    // std::cout << "ctrlPoints idx = " << idx - i << ": " << tmp << std::endl;
-    Eigen::Vector3d tmpPnt = tmp * ctrlPoints[idx - i];
+  for (int i = idx; i > idx-order; --i) {
+    double tmp = basis_function(i,u) * weight[i];
+    Eigen::Vector3d tmpPnt = tmp * ctrlPoints[i];
     sum += tmp;
     point += tmpPnt;
   }
 
   return point / sum;
 }
+
+NURBS_Surface::NURBS_Surface(int numU_, int numV_, int orderU_, int orderV_) {
+  curveU = std::make_unique<NURBS_Curve>(numU_, orderU_);
+  curveV = std::make_unique<NURBS_Curve>(numV_, orderV_);
+
+  ctrlPoints = std::vector<std::vector<Eigen::Vector3d>>(numU_, std::vector<Eigen::Vector3d>(numV_));
+}
+
+void NURBS_Surface::set_pinned_uniform_knots() {
+  // U 方向的节点向量
+  curveU->set_pinned_uniform_knots();
+  // V 方向的节点向量
+  curveV->set_pinned_uniform_knots();
+}
+
+Eigen::Vector3d NURBS_Surface::get_point(double u, double v) {
+  Eigen::Vector3d point{0,0,0};
+
+  // 确定参数所属的节点跨度区间
+  int idxU = curveU->find_knot_span(u), idxV = curveV->find_knot_span(v);
+
+  // 计算激活的控制点的贡献值 (order 个)
+  double sum = 0.0;
+  for (int i = idxU; i > idxU - curveU->order; --i) {
+    for (int j = idxV; j > idxV - curveU->order; --j) {
+      double tmp = curveU->basis_function(i, u) * curveV->basis_function(j, v) * weight[i][j];
+      Eigen::Vector3d tmpPnt = tmp * ctrlPoints[i][j];
+      sum += tmp;
+      point += tmpPnt;
+    }
+  }
+  return point / sum;
+}
+
 
