@@ -1,13 +1,13 @@
-#include "collision_detection/gjk.h"
+#include "gjk.h"
 
-// 调试用
-#include <iostream>
+const double posInf = std::numeric_limits<double>::infinity();
+const double negInf = -std::numeric_limits<double>::infinity();
 
 // 找凸集中在给定方向上的最远点
 Eigen::Vector3d farthest_point_on_direction(std::vector<Eigen::Vector3d> convexSet, Eigen::Vector3d dir) {
   if (convexSet.empty()) printf("the given convex set is empty!\n");
 
-  double maxProj = -1*DBL_MAX, tmpProj = 0.0;
+  double maxProj = negInf, tmpProj = 0.0;
   Eigen::Vector3d farthestPoint{0,0,0};
 
   // 遍历每个顶点，对比顶点在给定方向上的投影，找到最远的点
@@ -95,7 +95,7 @@ Eigen::Vector3d gjk_collision_update(std::vector<Eigen::Vector3d>& simplexList, 
 
 bool gjk_collision_detection(std::vector<Eigen::Vector3d> setA, std::vector<Eigen::Vector3d> setB) {
   int maxIte = 100;
-  double tolerance = 1e-6;
+  // double tolerance = 1e-6;
   // 第一次搜索方向
   Eigen::Vector3d dir = (setA[0] - setB[0]);
   // 第一个 Support 点
