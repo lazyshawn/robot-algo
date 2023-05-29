@@ -1,5 +1,4 @@
-#include "heuristics/genetic_algo.h"
-#include <iostream>
+#include "genetic_algo.h"
 
 const double posInf = std::numeric_limits<double>::infinity();
 const double negInf = -std::numeric_limits<double>::infinity();
@@ -101,15 +100,15 @@ Indivisual& Indivisual::operator= (const Indivisual& ind) {
 void Indivisual::setFitness(double tmpFitness) { fitness = tmpFitness; }
 
 std::ostream &operator<<(std::ostream &output, const Indivisual &ind) {
-    for (int j=0; j<ind.firstGene.size(); ++j) {
-      output << ind.firstGene[j] << ", ";
-    }
-    output << " --  ";
-    for (int j=0; j<ind.secondGene.size(); ++j) {
-      output << ind.secondGene[j] << ", ";
-    }
-    output << " :  " << ind.fitness;
-    return output;
+  for (int j = 0; j < static_cast<int>(ind.firstGene.size()); ++j) {
+    output << ind.firstGene[j] << ", ";
+  }
+  output << " --  ";
+  for (int j = 0; j < static_cast<int>(ind.secondGene.size()); ++j) {
+    output << ind.secondGene[j] << ", ";
+  }
+  output << " :  " << ind.fitness;
+  return output;
 }
 
 MTSPModel::MTSPModel(int numCity_, int numSalemen_) {
@@ -123,11 +122,11 @@ MTSPModel::MTSPModel(int numCity_, int numSalemen_) {
 
 
 void MTSPModel::calc_cost_matrix() {
-  double maxDist=-1.0, minDist=posInf;
+  // double maxDist=-1.0, minDist=posInf;
   maxCost = negInf; minCost = posInf;
   std::cout << "Cost Matrix:" << std::endl;
-  for (int i = 0; i < city.size(); ++i) {
-    for (int j = i + 1; j < city.size(); ++j) {
+  for (int i = 0; i < static_cast<int>(city.size()); ++i) {
+    for (int j = i + 1; j < static_cast<int>(city.size()); ++j) {
       double dist = (city[i] - city[j]).norm();
       costMat(i, j) = costMat(j, i) = dist;
       // 更新最大和最小距离
@@ -298,7 +297,7 @@ Indivisual MTSPModel::ga_crossover_tcx(Indivisual mon, Indivisual dad) {
   // 从父亲获取 restGene 的分配
   int idxSalemen = 0;
   baseCity = 0;
-  for (int i=0; i<restGene.size(); ++i) {
+  for (int i = 0; i < static_cast<int>(restGene.size()); ++i) {
     int idxCurGene = dad.index[restGene[i]];
     while (idxCurGene > baseCity + dad.secondGene[idxSalemen]) {
       baseCity += dad.secondGene[idxSalemen];
@@ -312,7 +311,7 @@ Indivisual MTSPModel::ga_crossover_tcx(Indivisual mon, Indivisual dad) {
   Indivisual sister;
   sister.secondGene = secondGene;
   for (int i=0; i<numSalemen; ++i) {
-    for (int j=0; j<savedGene[i].size(); ++j) {
+    for (int j = 0; j < static_cast<int>(savedGene[i].size()); ++j) {
       sister.firstGene.push_back(savedGene[i][j]);
     }
   }

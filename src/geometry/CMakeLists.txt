@@ -2,10 +2,10 @@
 add_library(algebra SHARED
   algebra.cpp
 )
-include_directories(${PROJECT_SOURCE_DIR}/include)
+include_directories(${PROJECT_SOURCE_DIR}/include/geometry/)
 # Usage requirement of lib
 target_include_directories(algebra
-  INTERFACE ${PROJECT_SOURCE_DIR}/include
+  INTERFACE ${PROJECT_SOURCE_DIR}/include/geometry/
 )
 # Install include files
 file(GLOB_RECURSE geometry_headers

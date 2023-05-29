@@ -6,8 +6,7 @@
 // 存储临界边
 #include <map>
 
-#include "user_interface/fileio.h"
-#include "geometry/algebra.h"
+#include "algebra.h"
 
 namespace qkhull {
   class Vertex;

@@ -10,6 +10,7 @@ add_executable(test_gjk
 )
 target_link_libraries(test_gjk PUBLIC
   gjk
+  user_interface
 )
 
 add_executable(test_qkhull
@@ -17,6 +18,7 @@ add_executable(test_qkhull
 )
 target_link_libraries(test_qkhull PUBLIC
   quickhull
+  user_interface
 )
 
 add_executable(test_ga

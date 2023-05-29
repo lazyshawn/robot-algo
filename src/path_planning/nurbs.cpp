@@ -1,6 +1,4 @@
-#include "path_planning/nurbs.h"
-
-#include <iostream>
+#include "nurbs.h"
 
 void set_pinned_uniform_knots(std::vector<double>& knots, int num, int order) {
   double knotValue = 0.0;
@@ -12,7 +10,7 @@ void set_pinned_uniform_knots(std::vector<double>& knots, int num, int order) {
     knots[i] = knotValue;
   }
   knotValue++;
-  for (int i=num; i<knots.size(); ++i) {
+  for (int i = num; i < static_cast<int>(knots.size()); ++i) {
     knots[i] = knotValue;
   }
 }
@@ -74,7 +72,7 @@ double NURBS_Curve::basis_function(int idx, double u) {
 
 int NURBS_Curve::find_knot_span(double u) {
   int idx = 0;
-  for (int i=0; i<knots.size(); ++i) {
+  for (int i = 0; i < static_cast<int>(knots.size()); ++i) {
     if (knots[i] <= u && knots[i+1] > u) {
       idx = i;
       break;

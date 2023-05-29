@@ -1,6 +1,8 @@
-#include "convex_decomposition/quickhull.h"
-#include <iostream>
-#include <cfloat>
+// convex_decomposition
+#include "quickhull.h"
+
+const double posInf = std::numeric_limits<double>::infinity();
+const double negInf = -std::numeric_limits<double>::infinity();
 
 void qkhull::Face::initFace(ptrVertex vtxA, ptrVertex vtxB, ptrVertex vtxC) {
   vertex[0] = vtxA;
@@ -181,7 +183,7 @@ void qkhull::initTetrahedron(VertexList& vertexList, FaceList& tetrahedron) {
   projMat << norm, orth;
 
   // 找到在投影到以线段为法线的平面上最长的向量
-  double tmpProj, maxProj=-1*DBL_MAX;
+  double tmpProj, maxProj=negInf;
   for (VertexIterator ite=vertexList.begin(); ite != vertexList.end(); ++ite) {
     tmpProj = (projMat.transpose() * (*ite)->point).squaredNorm();
     if (tmpProj > maxProj) {
@@ -196,7 +198,7 @@ void qkhull::initTetrahedron(VertexList& vertexList, FaceList& tetrahedron) {
   normABC = ab.cross(ac);
 
   // 找到ABC平面最远的点
-  maxProj=-1*DBL_MAX;
+  maxProj=negInf;
   for (VertexIterator ite=vertexList.begin(); ite != vertexList.end(); ++ite) {
     tmpProj = std::fabs(dist2plane((*ite)->point, normABC, (*iteVtx[0])->point));
     if (tmpProj > maxProj) {
@@ -204,12 +206,6 @@ void qkhull::initTetrahedron(VertexList& vertexList, FaceList& tetrahedron) {
       maxProj = tmpProj;
     }
   }
-
-  std::ofstream ofile("build/data/qkhull_points", std::ios::app);
-  ofile << (*iteVtx[0])->point.transpose() << std::endl;
-  ofile << (*iteVtx[1])->point.transpose() << std::endl;
-  ofile << (*iteVtx[2])->point.transpose() << std::endl;
-  ofile << (*iteVtx[3])->point.transpose() << std::endl;
 
   // 初始化四面体的四个表面
   std::vector<ptrFace> pFace{std::make_shared<Face>(), std::make_shared<Face>(),std::make_shared<Face>(), std::make_shared<Face>()};
@@ -224,7 +220,7 @@ void qkhull::initTetrahedron(VertexList& vertexList, FaceList& tetrahedron) {
   pFace[2]->setNeighbors(pFace[1], pFace[3], pFace[0]);
   pFace[3]->setNeighbors(pFace[0], pFace[2], pFace[1]);
 
-  for (int i=0; i<pFace.size(); ++i) {
+  for (int i = 0; i < static_cast<int>(pFace.size()); ++i) {
     // 用四面体初始化凸包
     tetrahedron.push_back(pFace[i]);
     // 从未遍历顶点中删除四面体顶点
@@ -342,9 +338,7 @@ void qkhull::constractNewFace(ptrVertex pVertex, BorderEdgeMap& borderEdgeM, Fac
 void qkhull::allocOuterSet(VertexList& vertexList, FaceList& faceList) {
   // 将每个顶点分配到一个表面的外部点集
   for (VertexIterator iteVtx = vertexList.begin(); iteVtx != vertexList.end(); ++iteVtx) {
-    int i=-1;
     for (FaceIterator iteFace = faceList.begin(); iteFace != faceList.end(); ++iteFace) {
-      i++;
       if ((*iteFace)->isAbove(*iteVtx)) {
         ptrVertex tmpVtx = std::make_shared<Vertex>();
         tmpVtx = (*iteVtx);

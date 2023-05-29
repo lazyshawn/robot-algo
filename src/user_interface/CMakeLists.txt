@@ -3,10 +3,10 @@ add_library(user_interface SHARED
   timer.cpp
   random.cpp
 )
-include_directories(${PROJECT_SOURCE_DIR}/include)
+include_directories(${PROJECT_SOURCE_DIR}/include/user_interface)
 # Usage requirement of lib
 target_include_directories(user_interface
-  INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}
+  INTERFACE ${PROJECT_SOURCE_DIR}/include/user_interface
 )
 # Specify the dependencies for a lib
 # target_link_libraries(user_interface -lpthread)

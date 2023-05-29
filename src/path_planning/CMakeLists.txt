@@ -2,10 +2,10 @@
 add_library(nurbs SHARED
   nurbs.cpp
 )
-include_directories(${PROJECT_SOURCE_DIR}/include)
+include_directories(${PROJECT_SOURCE_DIR}/include/path_planning)
 # Usage requirement of lib
 target_include_directories(nurbs
-  INTERFACE ${PROJECT_SOURCE_DIR}/include
+  INTERFACE ${PROJECT_SOURCE_DIR}/include/path_planning
 )
 # Specify the dependencies for a lib
 # target_link_libraries(nurbs -lpthread)

@@ -2,12 +2,12 @@
 add_library(quickhull SHARED
   quickhull.cpp
 )
-include_directories(${PROJECT_SOURCE_DIR}/include)
+include_directories(${PROJECT_SOURCE_DIR}/include/convex_decomposition)
 # Specify the dependencies for a lib
-target_link_libraries(quickhull algebra user_interface)
+target_link_libraries(quickhull algebra)
 # Usage requirement of lib
 target_include_directories(quickhull
-  INTERFACE ${PROJECT_SOURCE_DIR}/include
+  INTERFACE ${PROJECT_SOURCE_DIR}/include/convex_decomposition
 )
 # Install include files
 file(GLOB_RECURSE COLLISION_DETECTION_HEADERS 
