@@ -117,12 +117,14 @@ void NURBS_Curve::least_squares_fitting(std::vector<Eigen::Vector3d>& points) {
   double sumSepDist = 0.0;
   std::vector<double> sepDist(n-1);
   for (int i = 1; i < n; ++i) {
-    sepDist[i] = (points[i] - points[i - 1]).norm();
-    sumSepDist += sepDist[i];
+    sepDist[i-1] = (points[i] - points[i - 1]).norm();
+    sumSepDist += sepDist[i-1];
   }
 
   // 定义参数序列
-  std::vector<double> paraU(n,0);
+  std::cout << "n = " << n << std::endl;
+  std::vector<double> paraU(n, 0.0);
+  std::cout << "sdf" << std::endl;
   paraU[n - 1] = 1;
   for (int i = 1; i < n-1; ++i) {
     paraU[i] = paraU[i-1] + sepDist[i]/sumSepDist;
