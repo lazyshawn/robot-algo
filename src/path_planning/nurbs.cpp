@@ -114,6 +114,7 @@ void NURBS_Curve::least_squares_fitting(std::vector<Eigen::Vector3d>& points) {
   ctrlPoints[0] = points[0];
   ctrlPoints[m] = points[n-1];
 
+  // 计算离散拟合点的弦长之和
   double sumSepDist = 0.0;
   std::vector<double> sepDist(n-1);
   for (int i = 1; i < n; ++i) {
@@ -121,27 +122,26 @@ void NURBS_Curve::least_squares_fitting(std::vector<Eigen::Vector3d>& points) {
     sumSepDist += sepDist[i-1];
   }
 
-  // 定义参数序列
-  std::cout << "n = " << n << std::endl;
+  // 按弦长比例计算参数序列
   std::vector<double> paraU(n, 0.0);
-  std::cout << "sdf" << std::endl;
   paraU[n - 1] = 1;
   for (int i = 1; i < n-1; ++i) {
     paraU[i] = paraU[i-1] + sepDist[i]/sumSepDist;
   }
 
+  // 中间点的贡献
   std::vector<Eigen::Vector3d> res(n-1, {0,0,0});
   for (int i=1; i<n-1; ++i) {
     res[i] = points[i] - basis_function(0, paraU[i])*points[0] - basis_function(m,paraU[i]) * points[n-1];
   }
 
+  // 构建约束方程
   Eigen::MatrixXd N(n-2,m-1), D(m-1,3), R(m-1,3);
   for (int i=0; i<n-2; ++i) {
     for (int j=0; j<m-1; ++j) {
       N(i,j) = basis_function(j+1,paraU[i+1]);
     }
   }
-  // std::cout << N << std::endl;
 
   for (int i=0; i<m-1; ++i) {
     Eigen::Vector3d tmpPnt{0,0,0};
@@ -150,8 +150,8 @@ void NURBS_Curve::least_squares_fitting(std::vector<Eigen::Vector3d>& points) {
     }
     R.row(i) = tmpPnt.transpose();
   }
-  // std::cout << R << std::endl;
 
+  // 计算控制点
   D = (N.transpose()*N).inverse() * R;
   std::cout << D << std::endl;
   for (int i=0; i<m-1; ++i) {
