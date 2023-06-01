@@ -6,11 +6,11 @@ def plot_curve(ax):
     # 读取 cpp 生成的测试数据，在项目根目录下运行`script/..`
     mat = np.loadtxt("build/data/nurbs_curve_output").transpose()
     # 绘制 NURBS 曲线
-    ax.plot(mat[0,:], mat[1,:], mat[2,:])
+    ax.plot(mat[0,:], mat[1,:], mat[2,:], label='NURBS curve')
 
     points = np.loadtxt("build/data/nurbs_curve_ctrlpoint").transpose()
     print(points)
-    ax.scatter(points[0,:], points[1,:], points[2,:], c = 'r', marker = 's', s = 30)
+    ax.scatter(points[0,:], points[1,:], points[2,:], c = 'r', marker = 's', s = 30, label='Ctrl points')
     ax.plot(points[0,:], points[1,:], points[2,:], c = 'r', dashes=[1,1])
 
 def plot_surface(ax):
@@ -37,7 +37,11 @@ def plot_surface(ax):
     for i in range(sepV):
         ax.plot(outPoints[:,i,0], outPoints[:,i,1], outPoints[:,i,2], c = 'c')
 
-    return
+def plot_fit(ax):
+    plot_curve(ax)
+    points = np.loadtxt("build/data/nurbs_curve_fitpoint").transpose()
+    print(points)
+    ax.scatter(points[0,:], points[1,:], points[2,:], c = 'c', marker = 's', s = 30, label='Fitting points')
 
 if __name__ == "__main__":
     fig = plt.figure('空间三角形',figsize=(8,6))
@@ -47,8 +51,10 @@ if __name__ == "__main__":
     ax.set_zlabel('Z')
     colorMap = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
 
+    plot_fit(ax)
     #  plot_curve(ax)
-    plot_surface(ax)
+    #  plot_surface(ax)
 
+    ax.legend()
     plt.show()
 

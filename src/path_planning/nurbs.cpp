@@ -1,11 +1,20 @@
 #include "nurbs.h"
+#include <iostream>
 
-void set_pinned_uniform_knots(std::vector<double>& knots, int num, int order) {
+NURBS_Curve::NURBS_Curve(int num, int order_) {
+  order = order_, degree = order - 1;
+  ctrlPoints = std::vector<Eigen::Vector3d>(num);
+  weight = std::vector<double>(num, 1);
+  knots = std::vector<double>(num + order);
+}
+
+void NURBS_Curve::set_pinned_uniform_knots() {
+  int num = static_cast<int>(ctrlPoints.size());
   double knotValue = 0.0;
-  for (int i=0; i<order; ++i) {
+  for (int i = 0; i < order; ++i) {
     knots[i] = knotValue;
   }
-  for (int i=order; i<num; ++i) {
+  for (int i = order; i < num; ++i) {
     knotValue++;
     knots[i] = knotValue;
   }
@@ -15,15 +24,12 @@ void set_pinned_uniform_knots(std::vector<double>& knots, int num, int order) {
   }
 }
 
-NURBS_Curve::NURBS_Curve(int num, int order_) {
-  order = order_, degree = order - 1;
-  ctrlPoints = std::vector<Eigen::Vector3d>(num);
-  weight = std::vector<double>(num);
-  knots = std::vector<double>(num + order);
-}
-
-void NURBS_Curve::set_pinned_uniform_knots() {
-  ::set_pinned_uniform_knots(knots, static_cast<int>(ctrlPoints.size()), order);
+void NURBS_Curve::normalize_knots() {
+  int maxKnot = *(knots.end() - 1);
+  maxKnot = maxKnot == 0 ? 1 : maxKnot;
+  for (int i=0; i<knots.size(); ++i) {
+    knots[i] /= maxKnot;
+  }
 }
 
 double NURBS_Curve::basis_function(int idx, int degree_, double u) {
@@ -93,7 +99,7 @@ Eigen::Vector3d NURBS_Curve::get_point(double u) {
   // 计算激活的控制点的贡献值 (order 个)
   double sum = 0.0;
   Eigen::Vector3d point{0,0,0};
-  for (int i = idx; i > idx-order; --i) {
+  for (int i = idx; i > idx - order; --i) {
     double tmp = basis_function(i,u) * weight[i];
     Eigen::Vector3d tmpPnt = tmp * ctrlPoints[i];
     sum += tmp;
@@ -102,6 +108,57 @@ Eigen::Vector3d NURBS_Curve::get_point(double u) {
 
   return point / sum;
 }
+
+void NURBS_Curve::least_squares_fitting(std::vector<Eigen::Vector3d>& points) {
+  const int n = points.size(), m = ctrlPoints.size() - 1;
+  ctrlPoints[0] = points[0];
+  ctrlPoints[m] = points[n-1];
+
+  // 计算离散拟合点的弦长之和
+  double sumSepDist = 0.0;
+  std::vector<double> sepDist(n-1);
+  for (int i = 1; i < n; ++i) {
+    sepDist[i-1] = (points[i] - points[i - 1]).norm();
+    sumSepDist += sepDist[i-1];
+  }
+
+  // 按弦长比例计算参数序列
+  std::vector<double> paraU(n, 0.0);
+  paraU[n - 1] = 1;
+  for (int i = 1; i < n-1; ++i) {
+    paraU[i] = paraU[i-1] + sepDist[i]/sumSepDist;
+  }
+
+  // 中间点的贡献
+  std::vector<Eigen::Vector3d> res(n-1, {0,0,0});
+  for (int i=1; i<n-1; ++i) {
+    res[i] = points[i] - basis_function(0, paraU[i])*points[0] - basis_function(m,paraU[i]) * points[n-1];
+  }
+
+  // 构建约束方程
+  Eigen::MatrixXd N(n-2,m-1), D(m-1,3), R(m-1,3);
+  for (int i=0; i<n-2; ++i) {
+    for (int j=0; j<m-1; ++j) {
+      N(i,j) = basis_function(j+1,paraU[i+1]);
+    }
+  }
+
+  for (int i=0; i<m-1; ++i) {
+    Eigen::Vector3d tmpPnt{0,0,0};
+    for (int j=0; j<n-2; ++j) {
+      tmpPnt += basis_function(i+1,paraU[j+1]) * res[j+1];
+    }
+    R.row(i) = tmpPnt.transpose();
+  }
+
+  // 计算控制点
+  D = (N.transpose()*N).inverse() * R;
+  std::cout << D << std::endl;
+  for (int i=0; i<m-1; ++i) {
+    ctrlPoints[i+1] = D.row(i).transpose();
+  }
+}
+
 
 NURBS_Surface::NURBS_Surface(int numU_, int numV_, int orderU_, int orderV_) {
   curveU = std::make_unique<NURBS_Curve>(numU_, orderU_);

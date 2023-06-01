@@ -1,19 +1,64 @@
-#include <iostream>
-#include <fstream>
-#include <random>
-#include <chrono>
 
 #include "nurbs.h"
 #include "user_interface.h"
 
+void sort_points_along_direction(std::vector<Eigen::Vector3d>& pointVector, Eigen::Vector3d direction);
+
 void test_curve();
 void test_surface();
+void test_fitting();
 
 int main(int argc, char** argv) {
   // test_curve();
-  test_surface();
+  // test_surface();
+  test_fitting();
 
   return 0;
+}
+
+void test_fitting() {
+  NURBS_Curve curve(5,4);
+  const int numFit = 5;
+  // 随机生成拟合点
+  std::cout << "Fitting points:" << std::endl;
+  Eigen::Matrix<double, 3, numFit> pntMat = get_random_matrix(3, numFit, 0, 10);
+  std::vector<Eigen::Vector3d> fitPnt(numFit);
+  for (int i=0; i<numFit; ++i) {
+    fitPnt[i] = pntMat.col(i);
+  }
+  // 拟合点排序
+  sort_points_along_direction(fitPnt, Eigen::Vector3d({1,0,0}));
+  std::cout << pntMat << "\n" << std::endl;
+
+  // 设置节点向量
+  curve.set_pinned_uniform_knots();
+  curve.normalize_knots();
+  // 计算控制点
+  curve.least_squares_fitting(fitPnt);
+
+  std::cout << "\n===> Get points on curve:" << std::endl;
+  Eigen::Vector3d point = curve.get_point(0.5);
+  std::cout << point << std::endl;
+
+  // 记录控制点
+  std::ofstream ctrlPntFile("build/data/nurbs_curve_ctrlpoint", std::ios::trunc);
+  for (int i=0; i<static_cast<int>(curve.ctrlPoints.size()); ++i) {
+    ctrlPntFile << curve.ctrlPoints[i].transpose() << std::endl;
+  }
+  // 记录拟合点
+  std::ofstream fitPntFile("build/data/nurbs_curve_fitpoint", std::ios::trunc);
+  for (int i=0; i<static_cast<int>(fitPnt.size()); ++i) {
+    fitPntFile << fitPnt[i].transpose() << std::endl;
+  }
+  // 记录生成曲线
+  std::ofstream curveFile("build/data/nurbs_curve_output", std::ios::trunc);
+  double u = curve.knots[curve.degree];
+  double du = (curve.knots[curve.ctrlPoints.size()] - curve.knots[curve.degree]) / 100;
+  for (int i = 0; i < 100 + 1; ++i) {
+    Eigen::Vector3d point = curve.get_point(u);
+    u += du;
+    curveFile << point.transpose() << std::endl;
+  }
 }
 
 void test_surface() {
@@ -77,12 +122,6 @@ void test_surface() {
     }
     u += du;
   }
-  // double u = curve.knots[curve.degree];
-  // for (int i = 0; i < 100 + 1; ++i) {
-  //   Eigen::Vector3d point = curve.get_point(u);
-  //   u += du;
-  //   curveFile << point.transpose() << std::endl;
-  // }
 }
 
 void test_curve() {
@@ -127,3 +166,9 @@ void test_curve() {
   }
 }
 
+void sort_points_along_direction(std::vector<Eigen::Vector3d>& pointVector, Eigen::Vector3d direction) {
+  // Sort based on the projection on direction
+  std::sort(pointVector.begin(), pointVector.end(), [direction](const Eigen::Vector3d& p1, const Eigen::Vector3d& p2) {
+    return p1.dot(direction) < p2.dot(direction);
+  });
+}
