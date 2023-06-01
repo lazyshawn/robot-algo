@@ -2,6 +2,8 @@
 #include "nurbs.h"
 #include "user_interface.h"
 
+void sort_points_along_direction(std::vector<Eigen::Vector3d>& pointVector, Eigen::Vector3d direction);
+
 void test_curve();
 void test_surface();
 void test_fitting();
@@ -24,6 +26,8 @@ void test_fitting() {
   for (int i=0; i<numFit; ++i) {
     fitPnt[i] = pntMat.col(i);
   }
+  // 拟合点排序
+  sort_points_along_direction(fitPnt, Eigen::Vector3d({1,0,0}));
   std::cout << pntMat << "\n" << std::endl;
 
   // 设置节点向量
@@ -38,7 +42,7 @@ void test_fitting() {
 
   // 记录控制点
   std::ofstream ctrlPntFile("build/data/nurbs_curve_ctrlpoint", std::ios::trunc);
-  for (int i=0; i<static_cast<int>(pntMat.cols()); ++i) {
+  for (int i=0; i<static_cast<int>(curve.ctrlPoints.size()); ++i) {
     ctrlPntFile << curve.ctrlPoints[i].transpose() << std::endl;
   }
   // 记录拟合点
@@ -162,3 +166,9 @@ void test_curve() {
   }
 }
 
+void sort_points_along_direction(std::vector<Eigen::Vector3d>& pointVector, Eigen::Vector3d direction) {
+  // Sort based on the projection on direction
+  std::sort(pointVector.begin(), pointVector.end(), [direction](const Eigen::Vector3d& p1, const Eigen::Vector3d& p2) {
+    return p1.dot(direction) < p2.dot(direction);
+  });
+}
