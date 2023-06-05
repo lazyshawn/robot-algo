@@ -19,6 +19,9 @@ target_include_directories(algebra
 add_library(kd_tree SHARED
   kd_tree.cpp
 )
+target_link_libraries(kd_tree PUBLIC
+  algebra
+)
 # Usage requirement of lib
 target_include_directories(kd_tree
   INTERFACE ${PROJECT_SOURCE_DIR}/include/geometry/

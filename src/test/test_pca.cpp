@@ -2,7 +2,7 @@
 #include "user_interface.h"
 
 int main(int argc, char** argv) {
-  int numPoints = 100;
+  int numPoints = 10;
   Eigen::MatrixXd pntMat = get_random_matrix(3, numPoints, 0, 10);
   std::vector<Eigen::Vector3d> points(numPoints);
   for (int i=0; i<numPoints; ++i) {
