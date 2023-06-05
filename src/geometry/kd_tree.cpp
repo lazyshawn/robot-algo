@@ -47,13 +47,19 @@ std::unique_ptr<KdNode> KdTree::split_point_set(int start, int end, int depth) {
 
 void KdTree::search_knn(const Eigen::Vector3d& target, int k, std::vector<Eigen::Vector3d>& neighbors) {
   std::priority_queue<KdNode> pq;
+  double distThreshold = std::numeric_limits<double>::infinity();
 
   std::function<void(KdNode*)> search = [&](KdNode* node) {
     if (node == nullptr)  return;
 
     double distance = (target - node->point).squaredNorm();
-    pq.push(KdNode(node->point, distance));
-    if (pq.size() > k) pq.pop();
+    if (pq.size() < k || distance < distThreshold) {
+      pq.push(KdNode(node->point, distance));
+      if (pq.size() > k) {
+        pq.pop();
+        distThreshold = pq.top().distance;
+      }
+    }
 
     int axisIdx = node->depth % target.size();
     double diff = target[axisIdx] - node->point[axisIdx];
@@ -62,14 +68,14 @@ void KdTree::search_knn(const Eigen::Vector3d& target, int k, std::vector<Eigen:
       // 目标点在负方向，搜索左子树
       search(node->left.get());
       // 左子树内k个最近点中，最大距离大于目标点到当前分割平面的距离，搜索右子树
-      if (diff*diff < pq.top().distance || pq.size() < k) {
+      if (diff*diff < distThreshold || pq.size() < k) {
         search(node->right.get());
       }
     }
     // 沿当前节点的分割面法向量，目标点在正方向
     else {
       search(node->right.get());
-      if (diff*diff < pq.top().distance || pq.size() < k) {
+      if (diff*diff < distThreshold || pq.size() < k) {
         search(node->left.get());
       }
     }
