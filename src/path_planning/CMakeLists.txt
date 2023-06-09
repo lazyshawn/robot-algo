@@ -19,6 +19,8 @@ install(FILES ${path_planning_headers} DESTINATION
 
 # Install all lib in the package
 set(path_planning_libs nurbs)
-install(TARGETS ${path_planning_libs} LIBRARY DESTINATION 
-  ${PROJECT_BINARY_DIR}/out/lib/path_planning
+install(TARGETS ${path_planning_libs}
+  LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+  RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
 )

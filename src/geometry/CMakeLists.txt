@@ -32,6 +32,8 @@ set(geometry_libs
   algebra
   kd_tree
 )
-install(TARGETS ${geometry_libs} LIBRARY DESTINATION
-  ${PROJECT_BINARY_DIR}/out/lib/geometry
+install(TARGETS ${geometry_libs}
+  LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+  RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
 )

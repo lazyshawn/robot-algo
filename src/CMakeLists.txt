@@ -1,3 +1,9 @@
+cmake_policy(SET CMP0095 NEW)
+# Set the installation directory
+SET(CMAKE_INSTALL_PREFIX "${PROJECT_BINARY_DIR}/out")
+# Set the desired runtime path relative to the executable location
+SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib:\${ORIGIN}/../lib:${CMAKE_SOURCE_DIR}/lib")
+
 add_subdirectory(user_interface)
 add_subdirectory(geometry)
 add_subdirectory(collision_detection)

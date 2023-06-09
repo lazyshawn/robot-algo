@@ -19,6 +19,8 @@ install(FILES ${heuristics_headers} DESTINATION
 
 # Install all lib in the package
 set(heuristics_libs genetic_algo)
-install(TARGETS ${heuristics_libs} LIBRARY DESTINATION 
-  ${PROJECT_BINARY_DIR}/out/lib/heuristics
+install(TARGETS ${heuristics_libs}
+  LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+  RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
 )
