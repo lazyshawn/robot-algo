@@ -17,6 +17,8 @@ install(FILES ${COLLISION_DETECTION_HEADERS} DESTINATION
 
 # Install all lib in the package
 set(collision_detection_libs gjk)
-install(TARGETS ${collision_detection_libs} LIBRARY DESTINATION 
-  ${PROJECT_BINARY_DIR}/out/lib/collision_detection
+install(TARGETS ${collision_detection_libs}
+  LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+  RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
 )

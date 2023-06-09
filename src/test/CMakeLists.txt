@@ -37,8 +37,29 @@ target_link_libraries(test_nurbs PUBLIC
   user_interface
 )
 
-# set(test_bins test_gjk test_qkhull test_algebra)
-# install(TARGETS ${test_bins} RUNTIME DESTINATION
-#   ${PROJECT_BINARY_DIR}
-# )
+add_executable(test_pca
+  test_pca.cpp
+)
+target_link_libraries(test_pca PUBLIC
+  algebra
+  user_interface
+)
 
+add_executable(test_kdtree
+  test_kdtree.cpp
+)
+target_link_libraries(test_kdtree PUBLIC
+  kd_tree
+  user_interface
+)
+
+set(test_bins
+  test_gjk
+  test_qkhull
+  test_algebra
+)
+install(TARGETS ${test_bins}
+  LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+  RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+)
