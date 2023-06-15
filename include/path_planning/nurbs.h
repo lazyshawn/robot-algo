@@ -10,17 +10,20 @@ public:
   std::vector<Eigen::Vector3d> ctrlPoints;
   std::vector<double> weight;
   std::vector<double> knots;
+  std::vector<double> para;
   // 实际控制点数量
-  int activeCtrlPoints;
+  size_t activeCtrlPoints;
 
 public:
   NURBS_Curve(){};
   /* 
   * @brief : 构造
-  * @param : num - (最多)控制点数量
   * @param : order_ - (最高) NURBS 曲线阶数
+  * @param : num - (最多)控制点数量
   */
-  NURBS_Curve(int num, int order_);
+  NURBS_Curve(int order_, int num = 0);
+  NURBS_Curve(NURBS_Curve& other);
+  NURBS_Curve& operator=(NURBS_Curve&& other);
 
   /* 
   * @brief : 设置均匀的节点向量，保证曲线经过首末点
@@ -30,11 +33,19 @@ public:
   void set_pinned_uniform_knots();
 
   /* 
-  * @brief : 将节点向量归一化 u[0,1]
-  * @param : 
+  * @brief : 查找参数 u 所在的最后一个区间跨度
+  * @param : u - 参数值
+  * @return: (int) - 区间跨度起点的索引
+  */
+  int find_knot_span(double u) const;
+
+  /* 
+  * @brief : NURBS 基函数
+  * @param : idx - 当前控制点序号
+  * @param : u - 控制参数
   * @return: 
   */
-  void normalize_knots();
+  double basis_function(int idx, double u) const;
 
   /* 
   * @brief : 获取参数为 u 时的拟合点
@@ -54,17 +65,17 @@ public:
   * @brief : 根据拟合点和拟合精度，确定最少的控制点
   * @param : points - 待拟合点
   * @param : threshold - 阈值
-  * @return: 
+  * @return: double - 拟合精度，平均误差
   */
-  void auto_fitting(const std::vector<Eigen::Vector3d>& points, const double& threshold);
+  double auto_fitting(const std::vector<Eigen::Vector3d>& points, const double& threshold);
 
 private:
   /* 
-  * @brief : 查找参数 u 所在的最后一个区间跨度
-  * @param : u - 参数值
-  * @return: (int) - 区间跨度起点的索引
+  * @brief : 将节点向量归一化 u[0,1]
+  * @param : 
+  * @return: 
   */
-  int find_knot_span(double u) const;
+  void normalize_knots();
 
   /* 
   * @brief : NURBS 基函数
@@ -74,7 +85,6 @@ private:
   * @return: 
   */
   double basis_function(int idx, int degree_, double u) const;
-  double basis_function(int idx, double u) const;
 };
 
 

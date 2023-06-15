@@ -1,26 +1,50 @@
 #include "nurbs.h"
 
-NURBS_Curve::NURBS_Curve(int num, int order_) {
+NURBS_Curve::NURBS_Curve(int order_, int num) {
   order = order_, degree = order - 1;
+  if (num == 0) { num = order; }
   ctrlPoints = std::vector<Eigen::Vector3d>(num);
   activeCtrlPoints = ctrlPoints.size();
   weight = std::vector<double>(num, 1);
   knots = std::vector<double>(num + order);
 }
 
+NURBS_Curve::NURBS_Curve(NURBS_Curve& other) {
+  size_t num = other.ctrlPoints.size();
+
+  order = other.order, degree = other.degree;
+  ctrlPoints = std::vector<Eigen::Vector3d>(num);
+  activeCtrlPoints = ctrlPoints.size();
+  weight = std::vector<double>(num, 1);
+  knots = std::vector<double>(num + order);
+}
+
+NURBS_Curve& NURBS_Curve::operator=(NURBS_Curve&& other) {
+  size_t num = other.ctrlPoints.size();
+
+  order = other.order, degree = other.degree;
+  ctrlPoints = std::vector<Eigen::Vector3d>(num);
+  activeCtrlPoints = ctrlPoints.size();
+  weight = std::vector<double>(num, 1);
+  knots = std::vector<double>(num + order);
+  return *this;
+}
+
 void NURBS_Curve::set_pinned_uniform_knots() {
   double knotValue = 0.0;
-  for (int i = 0; i < order; ++i) {
+  for (size_t i = 0; i < order; ++i) {
     knots[i] = knotValue;
   }
-  for (int i = order; i < activeCtrlPoints; ++i) {
+  for (size_t i = order; i < activeCtrlPoints; ++i) {
     knotValue++;
     knots[i] = knotValue;
   }
   knotValue++;
-  for (int i = activeCtrlPoints; i < activeCtrlPoints + order; ++i) {
+  for (size_t i = activeCtrlPoints; i < activeCtrlPoints + order; ++i) {
     knots[i] = knotValue;
   }
+  // 节点向量单位化
+  normalize_knots();
 }
 
 void NURBS_Curve::normalize_knots() {
@@ -161,9 +185,13 @@ std::vector<double> NURBS_Curve::least_squares_fitting(const std::vector<Eigen::
   return paraU;
 }
 
-void NURBS_Curve::auto_fitting(const std::vector<Eigen::Vector3d>& points, const double& threshold) {
-  const int n = points.size();
-  ctrlPoints = std::vector<Eigen::Vector3d>(n);
+double NURBS_Curve::auto_fitting(const std::vector<Eigen::Vector3d>& points, const double& threshold) {
+  double accuracy = -1.0;
+  const size_t n = points.size();
+  if (ctrlPoints.size() < n) {
+    *this = NURBS_Curve(order, n);
+  }
+  para = std::vector<double>(n);
 
   // 二分法查找精度小于阈值的方式
   int left = order, right = n;
@@ -172,26 +200,28 @@ void NURBS_Curve::auto_fitting(const std::vector<Eigen::Vector3d>& points, const
     activeCtrlPoints = mid;
     // 设置节点向量
     set_pinned_uniform_knots();
-    normalize_knots();
     // 最小二乘 NURBS 拟合
-    std::vector<double> paraU = least_squares_fitting(points);
+    para = least_squares_fitting(points);
     // 计算拟合精度
     double sum = 0;
-    for (size_t i=0; i<paraU.size(); ++i) {
-      Eigen::Vector3d tmp = get_point(paraU[i]);
+    for (size_t i=0; i<para.size(); ++i) {
+      Eigen::Vector3d tmp = get_point(para[i]);
       sum += (tmp - points[i]).norm();
     }
     sum /= n;
+    accuracy = sum;
+
     if (left == right) {
       break;
     } else if (sum > threshold) {
       left = mid + 1;
-    } else if (sum < threshold) {
+    } else {
       // 避免重复检验
       if (left == mid) break;
       right = mid;
     }
   }
+  return accuracy;
 }
 
 NURBS_Surface::NURBS_Surface(int numU_, int numV_, int orderU_, int orderV_) {

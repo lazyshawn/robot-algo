@@ -26,8 +26,8 @@ int main(int argc, char** argv) {
 }
 
 void test_auto_fitting() {
-  const int numFit = 15;
-  NURBS_Curve curve(numFit,4);
+  const int numFit = 8;
+  NURBS_Curve curve(4);
   // 随机生成拟合点
   std::cout << "Fitting points:" << std::endl;
   Eigen::Matrix<double, 3, numFit> pntMat = get_random_matrix(3, numFit, 0, 10);
@@ -39,7 +39,7 @@ void test_auto_fitting() {
   sort_points_along_direction(fitPnt, Eigen::Vector3d({1,0,0}));
   std::cout << pntMat << "\n" << std::endl;
 
-  curve.auto_fitting(fitPnt, 5);
+  curve.auto_fitting(fitPnt, 0.00003);
 
   std::cout << "\n===> Get points on curve:" << std::endl;
   Eigen::Vector3d point = curve.get_point(0.5);
@@ -54,7 +54,7 @@ void test_auto_fitting() {
 }
 
 void test_fitting() {
-  NURBS_Curve curve(5,4);
+  NURBS_Curve curve(4, 5);
   const int numFit = 5;
   // 随机生成拟合点
   std::cout << "Fitting points:" << std::endl;
@@ -69,7 +69,6 @@ void test_fitting() {
 
   // 设置节点向量
   curve.set_pinned_uniform_knots();
-  curve.normalize_knots();
   // 计算控制点
   curve.least_squares_fitting(fitPnt);
 
@@ -150,7 +149,7 @@ void test_surface() {
 
 void test_curve() {
   int num = 10, order = 3;
-  NURBS_Curve curve(num, order);
+  NURBS_Curve curve(order, num);
 
   std::cout << "==> Initialization:" << std::endl;
   // 随机生成控制点
