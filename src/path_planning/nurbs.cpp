@@ -1,38 +1,65 @@
 #include "nurbs.h"
-#include <iostream>
 
-NURBS_Curve::NURBS_Curve(int num, int order_) {
+NURBS_Curve::NURBS_Curve(int order_, int num) {
   order = order_, degree = order - 1;
+  if (num == 0) { num = order; }
   ctrlPoints = std::vector<Eigen::Vector3d>(num);
+  activeCtrlPoints = ctrlPoints.size();
   weight = std::vector<double>(num, 1);
   knots = std::vector<double>(num + order);
 }
 
+NURBS_Curve::NURBS_Curve(NURBS_Curve& other) {
+  size_t num = other.ctrlPoints.size();
+
+  order = other.order, degree = other.degree;
+  ctrlPoints = std::vector<Eigen::Vector3d>(num);
+  activeCtrlPoints = ctrlPoints.size();
+  weight = std::vector<double>(num, 1);
+  knots = std::vector<double>(num + order);
+}
+
+NURBS_Curve& NURBS_Curve::operator=(NURBS_Curve&& other) {
+  size_t num = other.ctrlPoints.size();
+
+  order = other.order, degree = other.degree;
+  ctrlPoints = std::vector<Eigen::Vector3d>(num);
+  activeCtrlPoints = ctrlPoints.size();
+  weight = std::vector<double>(num, 1);
+  knots = std::vector<double>(num + order);
+  return *this;
+}
+
 void NURBS_Curve::set_pinned_uniform_knots() {
-  int num = static_cast<int>(ctrlPoints.size());
   double knotValue = 0.0;
-  for (int i = 0; i < order; ++i) {
+  for (size_t i = 0; i < order; ++i) {
     knots[i] = knotValue;
   }
-  for (int i = order; i < num; ++i) {
+  for (size_t i = order; i < activeCtrlPoints; ++i) {
     knotValue++;
     knots[i] = knotValue;
   }
   knotValue++;
-  for (int i = num; i < static_cast<int>(knots.size()); ++i) {
+  for (size_t i = activeCtrlPoints; i < activeCtrlPoints + order; ++i) {
     knots[i] = knotValue;
   }
+  // 节点向量单位化
+  normalize_knots();
 }
 
 void NURBS_Curve::normalize_knots() {
-  int maxKnot = *(knots.end() - 1);
+  // 实际考虑的节点长度
+  int activeKnots = activeCtrlPoints + order;
+  // 最后一个节点
+  int maxKnot = *(knots.begin() + activeKnots - 1);
   maxKnot = maxKnot == 0 ? 1 : maxKnot;
-  for (int i=0; i<knots.size(); ++i) {
+  // 节点值归一化
+  for (int i=0; i<activeKnots; ++i) {
     knots[i] /= maxKnot;
   }
 }
 
-double NURBS_Curve::basis_function(int idx, int degree_, double u) {
+double NURBS_Curve::basis_function(int idx, int degree_, double u) const {
   // 未生效的控制点
   if (knots[idx + degree_ + 1] < u) {
     return 0;
@@ -63,36 +90,35 @@ double NURBS_Curve::basis_function(int idx, int degree_, double u) {
   return f * basis_function(idx, degree_ - 1, u) + g * basis_function(idx + 1, degree_ - 1, u);
 }
 
-double NURBS_Curve::basis_function(int idx, double u) {
+double NURBS_Curve::basis_function(int idx, double u) const {
   // 处理超出区间范围的参数值
-  if (u > knots[ctrlPoints.size()]) {
-    printf("-- Warning: u = %f is out of range [u_order, u_num], set to u_num.\n", u);
-    u = knots[ctrlPoints.size()];
+  if (u > knots[activeCtrlPoints]) {
+    u = knots[activeCtrlPoints];
   } else if (u < knots[degree]) {
-    printf("-- Warning: u = %f is out of range [u_order, u_num], set to u_order.\n", u);
     u = knots[degree];
   }
 
   return basis_function(idx, degree, u);
 }
 
-int NURBS_Curve::find_knot_span(double u) {
-  int idx = 0;
-  for (int i = 0; i < static_cast<int>(knots.size()); ++i) {
-    if (knots[i] <= u && knots[i+1] > u) {
-      idx = i;
-      break;
-    }
-    // 已经到最后的节点
-    if (*(knots.end() - 1) - knots[i] < 1e-5) {
-      idx = i - 1;
-      break;
+int NURBS_Curve::find_knot_span(double u) const{
+  int left = order-1, right = activeCtrlPoints-1;
+  int result = left;
+  while (left <= right) {
+    int mid = left + (right - left) / 2;
+
+    if(knots[mid] < u) {
+      // 更新解
+      result = mid;
+      left = mid +1;
+    } else {
+      right = mid - 1;
     }
   }
-  return idx;
+  return result;
 }
 
-Eigen::Vector3d NURBS_Curve::get_point(double u) {
+Eigen::Vector3d NURBS_Curve::get_point(double u) const {
   // 确定参数所属的节点跨度区间
   int idx = find_knot_span(u);
 
@@ -109,8 +135,8 @@ Eigen::Vector3d NURBS_Curve::get_point(double u) {
   return point / sum;
 }
 
-void NURBS_Curve::least_squares_fitting(std::vector<Eigen::Vector3d>& points) {
-  const int n = points.size(), m = ctrlPoints.size() - 1;
+std::vector<double> NURBS_Curve::least_squares_fitting(const std::vector<Eigen::Vector3d>& points) {
+  const int n = points.size(), m = activeCtrlPoints - 1;
   ctrlPoints[0] = points[0];
   ctrlPoints[m] = points[n-1];
 
@@ -153,12 +179,50 @@ void NURBS_Curve::least_squares_fitting(std::vector<Eigen::Vector3d>& points) {
 
   // 计算控制点
   D = (N.transpose()*N).inverse() * R;
-  std::cout << D << std::endl;
   for (int i=0; i<m-1; ++i) {
     ctrlPoints[i+1] = D.row(i).transpose();
   }
+  return paraU;
 }
 
+double NURBS_Curve::auto_fitting(const std::vector<Eigen::Vector3d>& points, const double& threshold) {
+  double accuracy = -1.0;
+  const size_t n = points.size();
+  if (ctrlPoints.size() < n) {
+    *this = NURBS_Curve(order, n);
+  }
+  para = std::vector<double>(n);
+
+  // 二分法查找精度小于阈值的方式
+  int left = order, right = n;
+  while (left <= right) {
+    int mid = left + (right - left) / 2;
+    activeCtrlPoints = mid;
+    // 设置节点向量
+    set_pinned_uniform_knots();
+    // 最小二乘 NURBS 拟合
+    para = least_squares_fitting(points);
+    // 计算拟合精度
+    double sum = 0;
+    for (size_t i=0; i<para.size(); ++i) {
+      Eigen::Vector3d tmp = get_point(para[i]);
+      sum += (tmp - points[i]).norm();
+    }
+    sum /= n;
+    accuracy = sum;
+
+    if (left == right) {
+      break;
+    } else if (sum > threshold) {
+      left = mid + 1;
+    } else {
+      // 避免重复检验
+      if (left == mid) break;
+      right = mid;
+    }
+  }
+  return accuracy;
+}
 
 NURBS_Surface::NURBS_Surface(int numU_, int numV_, int orderU_, int orderV_) {
   curveU = std::make_unique<NURBS_Curve>(numU_, orderU_);

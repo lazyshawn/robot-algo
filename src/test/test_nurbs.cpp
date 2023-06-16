@@ -7,17 +7,54 @@ void sort_points_along_direction(std::vector<Eigen::Vector3d>& pointVector, Eige
 void test_curve();
 void test_surface();
 void test_fitting();
+void test_auto_fitting();
+
+// 记录控制点
+void record_ctrl_points(const NURBS_Curve& curve);
+// 记录拟合点
+void record_fitting_points(const std::vector<Eigen::Vector3d>& fitPnt);
+// 记录曲线
+void record_curve(const NURBS_Curve& curve, int sampleNum);
 
 int main(int argc, char** argv) {
   // test_curve();
   // test_surface();
-  test_fitting();
+  // test_fitting();
+  test_auto_fitting();
 
   return 0;
 }
 
+void test_auto_fitting() {
+  const int numFit = 8;
+  NURBS_Curve curve(4);
+  // 随机生成拟合点
+  std::cout << "Fitting points:" << std::endl;
+  Eigen::Matrix<double, 3, numFit> pntMat = get_random_matrix(3, numFit, 0, 10);
+  std::vector<Eigen::Vector3d> fitPnt(numFit);
+  for (int i=0; i<numFit; ++i) {
+    fitPnt[i] = pntMat.col(i);
+  }
+  // 拟合点排序
+  sort_points_along_direction(fitPnt, Eigen::Vector3d({1,0,0}));
+  std::cout << pntMat << "\n" << std::endl;
+
+  curve.auto_fitting(fitPnt, 0.00003);
+
+  std::cout << "\n===> Get points on curve:" << std::endl;
+  Eigen::Vector3d point = curve.get_point(0.5);
+  std::cout << point << std::endl;
+
+  // 记录控制点
+  record_ctrl_points(curve);
+  // 记录拟合点
+  record_fitting_points(fitPnt);
+  // 记录生成曲线
+  record_curve(curve, 100);
+}
+
 void test_fitting() {
-  NURBS_Curve curve(5,4);
+  NURBS_Curve curve(4, 5);
   const int numFit = 5;
   // 随机生成拟合点
   std::cout << "Fitting points:" << std::endl;
@@ -32,7 +69,6 @@ void test_fitting() {
 
   // 设置节点向量
   curve.set_pinned_uniform_knots();
-  curve.normalize_knots();
   // 计算控制点
   curve.least_squares_fitting(fitPnt);
 
@@ -41,24 +77,11 @@ void test_fitting() {
   std::cout << point << std::endl;
 
   // 记录控制点
-  std::ofstream ctrlPntFile("build/data/nurbs_curve_ctrlpoint", std::ios::trunc);
-  for (int i=0; i<static_cast<int>(curve.ctrlPoints.size()); ++i) {
-    ctrlPntFile << curve.ctrlPoints[i].transpose() << std::endl;
-  }
+  record_ctrl_points(curve);
   // 记录拟合点
-  std::ofstream fitPntFile("build/data/nurbs_curve_fitpoint", std::ios::trunc);
-  for (int i=0; i<static_cast<int>(fitPnt.size()); ++i) {
-    fitPntFile << fitPnt[i].transpose() << std::endl;
-  }
+  record_fitting_points(fitPnt);
   // 记录生成曲线
-  std::ofstream curveFile("build/data/nurbs_curve_output", std::ios::trunc);
-  double u = curve.knots[curve.degree];
-  double du = (curve.knots[curve.ctrlPoints.size()] - curve.knots[curve.degree]) / 100;
-  for (int i = 0; i < 100 + 1; ++i) {
-    Eigen::Vector3d point = curve.get_point(u);
-    u += du;
-    curveFile << point.transpose() << std::endl;
-  }
+  record_curve(curve, 100);
 }
 
 void test_surface() {
@@ -126,7 +149,7 @@ void test_surface() {
 
 void test_curve() {
   int num = 10, order = 3;
-  NURBS_Curve curve(num, order);
+  NURBS_Curve curve(order, num);
 
   std::cout << "==> Initialization:" << std::endl;
   // 随机生成控制点
@@ -151,19 +174,9 @@ void test_curve() {
   std::cout << point << std::endl;
 
   // 记录控制点
-  std::ofstream ctrlPntFile("build/data/nurbs_curve_ctrlpoint", std::ios::trunc);
-  for (int i=0; i<pntMat.cols(); ++i) {
-    ctrlPntFile << curve.ctrlPoints[i].transpose() << std::endl;
-  }
+  record_ctrl_points(curve);
   // 记录生成曲线
-  std::ofstream curveFile("build/data/nurbs_curve_output", std::ios::trunc);
-  double u = curve.knots[curve.degree];
-  double du = (curve.knots[curve.ctrlPoints.size()] - curve.knots[curve.degree]) / 100;
-  for (int i = 0; i < 100 + 1; ++i) {
-    Eigen::Vector3d point = curve.get_point(u);
-    u += du;
-    curveFile << point.transpose() << std::endl;
-  }
+  record_curve(curve, 100);
 }
 
 void sort_points_along_direction(std::vector<Eigen::Vector3d>& pointVector, Eigen::Vector3d direction) {
@@ -172,3 +185,32 @@ void sort_points_along_direction(std::vector<Eigen::Vector3d>& pointVector, Eige
     return p1.dot(direction) < p2.dot(direction);
   });
 }
+
+// 记录控制点
+void record_ctrl_points(const NURBS_Curve& curve) {
+  std::ofstream ctrlPntFile("build/data/nurbs_curve_ctrlpoint", std::ios::trunc);
+  for (int i=0; i<curve.activeCtrlPoints; ++i) {
+    ctrlPntFile << curve.ctrlPoints[i].transpose() << std::endl;
+  }
+}
+
+// 记录拟合点
+void record_fitting_points(const std::vector<Eigen::Vector3d>& fitPnt) {
+  std::ofstream fitPntFile("build/data/nurbs_curve_fitpoint", std::ios::trunc);
+  for (int i=0; i<static_cast<int>(fitPnt.size()); ++i) {
+    fitPntFile << fitPnt[i].transpose() << std::endl;
+  }
+}
+
+// 记录生成曲线
+void record_curve(const NURBS_Curve& curve, int sampleNum) {
+  std::ofstream curveFile("build/data/nurbs_curve_output", std::ios::trunc);
+  double u = curve.knots[curve.degree];
+  double du = (curve.knots[curve.activeCtrlPoints] - curve.knots[curve.degree]) / (sampleNum - 1);
+  for (int i = 0; i < sampleNum; ++i) {
+    Eigen::Vector3d point = curve.get_point(u);
+    u += du;
+    curveFile << point.transpose() << std::endl;
+  }
+}
+
