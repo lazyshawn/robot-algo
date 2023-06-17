@@ -1,14 +1,15 @@
 # heuristics_lib
-add_library(genetic_algo SHARED
+add_library(genetic_algo
   genetic_algo.cpp
 )
-include_directories(${PROJECT_SOURCE_DIR}/include/heuristics)
+set_target_properties(genetic_algo PROPERTIES
+  INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/include/heuristics"
+)
 # Usage requirement of lib
 target_include_directories(genetic_algo
   INTERFACE ${PROJECT_SOURCE_DIR}/include/heuristics
 )
-# Specify the dependencies for a lib
-# target_link_libraries(genetic_algo -lpthread)
+
 # Install include files
 file(GLOB_RECURSE heuristics_headers
   ${PROJECT_SOURCE_DIR}/include/heuristics/*.h
