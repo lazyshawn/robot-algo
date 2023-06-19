@@ -1,8 +1,10 @@
 # collision_detection_lib
-add_library(gjk SHARED
+add_library(gjk
   gjk.cpp
 )
-include_directories(${PROJECT_SOURCE_DIR}/include/collision_detection)
+set_target_properties(gjk PROPERTIES
+  INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/include/collision_detection"
+)
 # Usage requirement of lib
 target_include_directories(gjk
   INTERFACE ${PROJECT_SOURCE_DIR}/include/collision_detection

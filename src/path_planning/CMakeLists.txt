@@ -1,14 +1,15 @@
 # path_planning_lib
-add_library(nurbs SHARED
+add_library(nurbs
   nurbs.cpp
 )
-include_directories(${PROJECT_SOURCE_DIR}/include/path_planning)
+set_target_properties(nurbs PROPERTIES
+  INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/include/path_planning"
+)
 # Usage requirement of lib
 target_include_directories(nurbs
   INTERFACE ${PROJECT_SOURCE_DIR}/include/path_planning
 )
-# Specify the dependencies for a lib
-# target_link_libraries(nurbs -lpthread)
+
 # Install include files
 file(GLOB_RECURSE path_planning_headers
   ${PROJECT_SOURCE_DIR}/include/path_planning/*.h

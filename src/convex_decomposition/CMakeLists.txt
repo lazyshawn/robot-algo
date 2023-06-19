@@ -1,8 +1,10 @@
 # convex_decomposition_lib
-add_library(quickhull SHARED
+add_library(quickhull
   quickhull.cpp
 )
-include_directories(${PROJECT_SOURCE_DIR}/include/convex_decomposition)
+set_target_properties(quickhull PROPERTIES
+  INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/include/convex_decomposition"
+)
 # Specify the dependencies for a lib
 target_link_libraries(quickhull algebra)
 # Usage requirement of lib

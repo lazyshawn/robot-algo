@@ -1,14 +1,16 @@
 # user_interface_lib
-add_library(user_interface SHARED
+add_library(user_interface
   timer.cpp
   random.cpp
 )
-# Specify the dependencies for a lib
-include_directories(${PROJECT_SOURCE_DIR}/include/user_interface)
+set_target_properties(user_interface PROPERTIES
+  INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/include/user_interface"
+)
 # Usage requirement of lib
 target_include_directories(user_interface
   INTERFACE ${PROJECT_SOURCE_DIR}/include/user_interface
 )
+
 # Install include files
 file(GLOB_RECURSE user_interface_headers
   ${PROJECT_SOURCE_DIR}/include/user_interface/*.h
