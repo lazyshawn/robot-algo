@@ -3,6 +3,7 @@
 #include <vector>
 #include <memory>
 #include <eigen3/Eigen/Dense>
+#include <eigen3/Eigen/Sparse>
 
 class NURBS_Curve {
 public:

@@ -9,9 +9,9 @@ def plot_curve(ax):
     ax.plot(mat[0,:], mat[1,:], mat[2,:], label='NURBS curve')
 
     points = np.loadtxt("build/data/nurbs_curve_ctrlpoint").transpose()
-    print(points)
-    ax.scatter(points[0,:], points[1,:], points[2,:], c = 'r', marker = 's', s = 30, label='Ctrl points')
-    ax.plot(points[0,:], points[1,:], points[2,:], c = 'r', dashes=[1,1])
+    #  print(points)
+    #  ax.scatter(points[0,:], points[1,:], points[2,:], c = 'r', marker = 's', s = 30, label='Ctrl points')
+    #  ax.plot(points[0,:], points[1,:], points[2,:], c = 'r', dashes=[1,1])
 
 def plot_surface(ax):
     # 绘制控制点
@@ -40,8 +40,8 @@ def plot_surface(ax):
 def plot_fit(ax):
     plot_curve(ax)
     points = np.loadtxt("build/data/nurbs_curve_fitpoint").transpose()
-    print(points)
-    ax.scatter(points[0,:], points[1,:], points[2,:], c = 'c', marker = 's', s = 30, label='Fitting points')
+    #  print(points)
+    ax.scatter(points[0,:], points[1,:], points[2,:], c = 'c', marker = 's', s = 3, label='Fitting points')
 
 if __name__ == "__main__":
     fig = plt.figure('空间三角形',figsize=(8,6))

@@ -1,4 +1,5 @@
 #include "nurbs.h"
+#include "iostream"
 
 NURBS_Curve::NURBS_Curve(int order_, int num) {
   order = order_, degree = order - 1;
@@ -60,11 +61,11 @@ void NURBS_Curve::normalize_knots() {
 }
 
 double NURBS_Curve::basis_function(int idx, int degree_, double u) const {
-  // 未生效的控制点
+  // 已失效的控制点
   if (knots[idx + degree_ + 1] < u) {
     return 0;
   }
-  // 已失效的控制点
+  // 未生效的控制点
   else if (knots[idx] > u) {
     return 0;
   }
@@ -143,29 +144,34 @@ std::vector<double> NURBS_Curve::least_squares_fitting(const std::vector<Eigen::
   // 计算离散拟合点的弦长之和
   double sumSepDist = 0.0;
   std::vector<double> sepDist(n-1);
-  for (int i = 1; i < n; ++i) {
-    sepDist[i-1] = (points[i] - points[i - 1]).norm();
-    sumSepDist += sepDist[i-1];
+  for (int i = 0; i < n-1; ++i) {
+    sepDist[i] = (points[i+1] - points[i]).norm();
+    sumSepDist += sepDist[i];
   }
 
   // 按弦长比例计算参数序列
   std::vector<double> paraU(n, 0.0);
   paraU[n - 1] = 1;
   for (int i = 1; i < n-1; ++i) {
-    paraU[i] = paraU[i-1] + sepDist[i]/sumSepDist;
+    paraU[i] = paraU[i-1] + sepDist[i-1]/sumSepDist;
   }
 
   // 中间点的贡献
-  std::vector<Eigen::Vector3d> res(n-1, {0,0,0});
+  std::vector<Eigen::Vector3d> res(n, {0,0,0});
   for (int i=1; i<n-1; ++i) {
     res[i] = points[i] - basis_function(0, paraU[i])*points[0] - basis_function(m,paraU[i]) * points[n-1];
   }
 
-  // 构建约束方程
-  Eigen::MatrixXd N(n-2,m-1), D(m-1,3), R(m-1,3);
+  // 构建约束方程 (n,m 相差过大时，这些矩阵将是稀疏矩阵)
+  // Eigen::MatrixXd N(n-2,m-1), D(m-1,3), R(m-1,3);
+  Eigen::SparseMatrix<double> N(n-2,m-1), D(m-1,3), R(m-1,3);
   for (int i=0; i<n-2; ++i) {
     for (int j=0; j<m-1; ++j) {
-      N(i,j) = basis_function(j+1,paraU[i+1]);
+      // N(i,j) = basis_function(j+1,paraU[i+1]);
+      double basisFunc = basis_function(j+1,paraU[i+1]);
+      if (basisFunc > 1e-5) {
+        N.insert(i,j) = basisFunc;
+      }
     }
   }
 
@@ -174,11 +180,21 @@ std::vector<double> NURBS_Curve::least_squares_fitting(const std::vector<Eigen::
     for (int j=0; j<n-2; ++j) {
       tmpPnt += basis_function(i+1,paraU[j+1]) * res[j+1];
     }
-    R.row(i) = tmpPnt.transpose();
+    // R.row(i) = tmpPnt.transpose();
+    for (size_t j=0; j<3; ++j) {
+      R.insert(i,j) = tmpPnt(j);
+    }
   }
 
   // 计算控制点
-  D = (N.transpose()*N).inverse() * R;
+  Eigen::SparseMatrix<double> NTN = N.transpose() * N;
+  Eigen::SparseMatrix<double> ident(m-1,m-1);
+  ident.setIdentity();
+  // Eigen::SparseLU<Eigen::SparseMatrix<double>> solver;
+  Eigen::SimplicialLDLT<Eigen::SparseMatrix<double>> solver;
+  solver.compute(NTN);
+  D = solver.solve(ident) * R;
+  // D = (N.transpose()*N).inverse() * R;
   for (int i=0; i<m-1; ++i) {
     ctrlPoints[i+1] = D.row(i).transpose();
   }
@@ -186,7 +202,6 @@ std::vector<double> NURBS_Curve::least_squares_fitting(const std::vector<Eigen::
 }
 
 double NURBS_Curve::auto_fitting(const std::vector<Eigen::Vector3d>& points, const double& threshold) {
-  double accuracy = -1.0;
   const size_t n = points.size();
   if (ctrlPoints.size() < n) {
     *this = NURBS_Curve(order, n);
@@ -195,8 +210,10 @@ double NURBS_Curve::auto_fitting(const std::vector<Eigen::Vector3d>& points, con
 
   // 二分法查找精度小于阈值的方式
   int left = order, right = n;
+  std::pair<size_t, double> bestFit{n,std::numeric_limits<double>::infinity()};
   while (left <= right) {
     int mid = left + (right - left) / 2;
+    printf("left = %d, mid = %d, right = %d\n", left, mid, right);
     activeCtrlPoints = mid;
     // 设置节点向量
     set_pinned_uniform_knots();
@@ -209,7 +226,11 @@ double NURBS_Curve::auto_fitting(const std::vector<Eigen::Vector3d>& points, con
       sum += (tmp - points[i]).norm();
     }
     sum /= n;
-    accuracy = sum;
+    // 更新最优的平均拟合精度
+    if (sum < bestFit.second) {
+      bestFit = std::make_pair(mid, sum);
+    }
+    printf("cur accuracy = %lf\n", sum);
 
     if (left == right) {
       break;
@@ -220,8 +241,18 @@ double NURBS_Curve::auto_fitting(const std::vector<Eigen::Vector3d>& points, con
       if (left == mid) break;
       right = mid;
     }
+  } // binary search
+
+  // 未能获得满足条件的拟合方式，使用遍历过程中效果最优的拟合
+  if (bestFit.second > threshold && activeCtrlPoints != bestFit.first) {
+    std::cout << "Cannot fitting. bestFit: " << bestFit.first << ", " << bestFit.second << std::endl;
+    activeCtrlPoints = bestFit.first;
+    // 设置节点向量
+    set_pinned_uniform_knots();
+    // 最小二乘 NURBS 拟合
+    para = least_squares_fitting(points);
   }
-  return accuracy;
+  return bestFit.second;
 }
 
 NURBS_Surface::NURBS_Surface(int numU_, int numV_, int orderU_, int orderV_) {
