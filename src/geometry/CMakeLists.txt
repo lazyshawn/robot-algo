@@ -29,7 +29,7 @@ file(GLOB_RECURSE geometry_headers
   ${PROJECT_SOURCE_DIR}/include/geometry/*.h
 )
 install(FILES ${geometry_headers} DESTINATION
-  ${PROJECT_BINARY_DIR}/out/include/geometry
+  include/geometry
 )
 
 # Install all lib in the package
@@ -38,7 +38,7 @@ set(geometry_libs
   kd_tree
 )
 install(TARGETS ${geometry_libs}
-  LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-  RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
-  ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
+  ARCHIVE DESTINATION lib
 )

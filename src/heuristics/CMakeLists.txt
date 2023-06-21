@@ -15,13 +15,13 @@ file(GLOB_RECURSE heuristics_headers
   ${PROJECT_SOURCE_DIR}/include/heuristics/*.h
 )
 install(FILES ${heuristics_headers} DESTINATION 
-  ${PROJECT_BINARY_DIR}/out/include/heuristics
+  include/heuristics
 )
 
 # Install all lib in the package
 set(heuristics_libs genetic_algo)
 install(TARGETS ${heuristics_libs}
-  LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-  RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
-  ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
+  ARCHIVE DESTINATION lib
 )

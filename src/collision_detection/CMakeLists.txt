@@ -14,13 +14,13 @@ file(GLOB_RECURSE COLLISION_DETECTION_HEADERS
   ${PROJECT_SOURCE_DIR}/include/collision_detection/*.h
 )
 install(FILES ${COLLISION_DETECTION_HEADERS} DESTINATION 
-  ${PROJECT_BINARY_DIR}/out/include/collision_detection
+  include/collision_detection
 )
 
 # Install all lib in the package
 set(collision_detection_libs gjk)
 install(TARGETS ${collision_detection_libs}
-  LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-  RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
-  ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
+  ARCHIVE DESTINATION lib
 )

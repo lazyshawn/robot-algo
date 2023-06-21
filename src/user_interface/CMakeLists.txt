@@ -16,13 +16,13 @@ file(GLOB_RECURSE user_interface_headers
   ${PROJECT_SOURCE_DIR}/include/user_interface/*.h
 )
 install(FILES ${user_interface_headers} DESTINATION 
-  ${CMAKE_INSTALL_PREFIX}/include/user_interface
+  include/user_interface
 )
 
 # Install all lib in the package
 set(user_interface_libs user_interface)
 install(TARGETS ${user_interface_libs}
-  LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-  RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
-  ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
+  ARCHIVE DESTINATION lib
 )

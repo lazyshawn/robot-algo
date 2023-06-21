@@ -16,13 +16,13 @@ file(GLOB_RECURSE COLLISION_DETECTION_HEADERS
   ${PROJECT_SOURCE_DIR}/include/convex_decomposition/*.h
 )
 install(FILES ${COLLISION_DETECTION_HEADERS} DESTINATION 
-  ${PROJECT_BINARY_DIR}/out/include/convex_decomposition
+  include/convex_decomposition
 )
 
 # Install all lib in the package
 set(convex_decomposition_libs quickhull)
 install(TARGETS ${convex_decomposition_libs}
-  LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-  RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
-  ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
+  ARCHIVE DESTINATION lib
 )

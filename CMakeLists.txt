@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
-project(robot_algo)
+project(robot_algo VERSION 1.0.0)
 
 set(CMAKE_CXX_STANDARD 17)
 # Support degug
@@ -26,3 +26,13 @@ endif()
 # include_directories(include)
 
 add_subdirectory(src)
+
+include(InstallRequiredSystemLibraries)
+set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}")
+set(CPACK_PACKAGE_VENDOR "Lazyshawn")
+set(CPACK_RESOURCE_FILE_README "${CMAKE_SOURCE_DIR}/README.md")
+# set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE")
+set(CPACK_SOURCE_GENERATOR "ZIP")
+
+include(CPack)
+

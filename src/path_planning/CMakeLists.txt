@@ -15,13 +15,13 @@ file(GLOB_RECURSE path_planning_headers
   ${PROJECT_SOURCE_DIR}/include/path_planning/*.h
 )
 install(FILES ${path_planning_headers} DESTINATION 
-  ${PROJECT_BINARY_DIR}/out/include/path_planning
+  include/path_planning
 )
 
 # Install all lib in the package
 set(path_planning_libs nurbs)
 install(TARGETS ${path_planning_libs}
-  LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-  RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
-  ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
+  ARCHIVE DESTINATION lib
 )
