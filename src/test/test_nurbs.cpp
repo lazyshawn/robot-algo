@@ -27,7 +27,12 @@ int main(int argc, char** argv) {
   // test_curve();
   // test_surface();
   // test_fitting();
-  test_auto_fitting();
+  // test_auto_fitting();
+
+  // Eigen::MatrixXd data = read_eigen_from_file<Eigen::MatrixXd>("/home/shawn/Downloads/points.txt");
+  Eigen::MatrixXd data;
+  read_eigen_from_file("/home/shawn/Downloads/points.txt", data);
+  std::cout << data << std::endl;
 
   return 0;
 }

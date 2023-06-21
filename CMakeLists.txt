@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 17)
 # Support degug
 SET(CMAKE_CXX_FLAGS_DEBUG "$ENV{CXXFLAGS} -O0 -Wall -g2 -ggdb")
 # SET(CMAKE_CXX_FLAGS_RELEASE {CXXFLAGS} -O3 -Wall)
-SET(CMAKE_BUILD_TYPE "Release")
+SET(CMAKE_BUILD_TYPE "Debug")
 
 if(WIN32)
   # create symbol for exporting lib for dynmic library
