@@ -20,7 +20,15 @@ int main(int argc, char** argv) {
   // test_curve();
   // test_surface();
   // test_fitting();
-  test_auto_fitting();
+  // test_auto_fitting();
+  std::vector<std::vector<double>> data;
+  read_vec_from_file("/home/shawn/Downloads/cluoutput.txt", data);
+  for (size_t i=0; i<data.size(); ++i) {
+    for (size_t j=0; j<data[i].size(); ++j) {
+      std::cout << data[i][j] << ", ";
+    }
+    std::cout << std::endl;
+  }
 
   return 0;
 }

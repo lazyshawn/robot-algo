@@ -2,6 +2,7 @@
 add_library(user_interface
   timer.cpp
   random.cpp
+  fileio.cpp
 )
 set_target_properties(user_interface PROPERTIES
   INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/include/user_interface"
