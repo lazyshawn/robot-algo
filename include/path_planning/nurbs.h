@@ -56,6 +56,13 @@ public:
   Eigen::Vector3d get_point(double u) const;
 
   /* 
+  * @brief : 均匀采样
+  * @param : length - NURBS 曲线上的采样间隔
+  * @return: 
+  */
+  void get_uniform_sample(double length, double threshold);
+
+  /* 
   * @brief : 利用 Nurbs 曲线进行最小二乘拟合，修改曲线的控制点和权重
   * @param : points - 待拟合的点
   * @return: 

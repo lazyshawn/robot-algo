@@ -15,9 +15,9 @@ def plot_curve(ax):
         ax.plot(mat[0,:], mat[1,:], mat[2,:], label='NURBS curve')
 
     points = read_data_from_txt("build/data/nurbs_curve_ctrlpoint").transpose()
-    #  if(len(points)):
-    #      ax.scatter(points[0,:], points[1,:], points[2,:], c = 'r', marker = 's', s = 30, label='Ctrl points')
-    #      ax.plot(points[0,:], points[1,:], points[2,:], c = 'r', dashes=[1,1])
+    if(len(points) and len(points[0]) < 20):
+        ax.scatter(points[0,:], points[1,:], points[2,:], c = 'r', marker = 's', s = 30, label='Ctrl points')
+        ax.plot(points[0,:], points[1,:], points[2,:], c = 'r', dashes=[1,1])
 
 def plot_surface(ax):
     # 绘制控制点
@@ -45,9 +45,9 @@ def plot_surface(ax):
 
 def plot_fit(ax):
     plot_curve(ax)
-    points = np.loadtxt("build/data/nurbs_curve_fitpoint").transpose()
-    #  print(points)
-    ax.scatter(points[0,:], points[1,:], points[2,:], c = 'c', marker = 's', s = 3, label='Fitting points')
+    points = read_data_from_txt("build/data/nurbs_curve_fitpoint").transpose()
+    if(len(points)):
+        ax.scatter(points[0,:], points[1,:], points[2,:], c = 'c', marker = 's', s = 3, label='Fitting points')
 
 if __name__ == "__main__":
     fig = plt.figure('空间三角形',figsize=(8,6))

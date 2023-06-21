@@ -136,6 +136,27 @@ Eigen::Vector3d NURBS_Curve::get_point(double u) const {
   return point / sum;
 }
 
+void NURBS_Curve::get_uniform_sample(double length, double threshold) {
+  // 二分法求第一个大于采样间隔的点
+  double left = 0, right = 1;
+  Eigen::Vector3d pre = get_point(0);
+  while (left < right) {
+    double mid = left + (right - left) / 2;
+    Eigen::Vector3d tmp = get_point(mid);
+    double len = (tmp - pre).squaredNorm();
+    // 终止条件
+    if (fabs(len - length) < threshold) {
+      std::cout << "pre = " << pre.transpose() << std::endl;
+      std::cout << "tmp = " << tmp.transpose() << std::endl;
+      break;
+    } else if (len < length) {
+      left = mid;
+    } else {
+      right = mid;
+    }
+  }
+}
+
 std::vector<double> NURBS_Curve::least_squares_fitting(const std::vector<Eigen::Vector3d>& points) {
   const int n = points.size(), m = activeCtrlPoints - 1;
   ctrlPoints[0] = points[0];
