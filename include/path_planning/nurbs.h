@@ -76,6 +76,7 @@ public:
   * @return: double - 拟合精度，平均误差
   */
   double auto_fitting(const std::vector<Eigen::Vector3d>& points, const double& threshold);
+  double auto_fitting_binary(const std::vector<Eigen::Vector3d>& points, const double& threshold);
 
 private:
   /* 

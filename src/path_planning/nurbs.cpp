@@ -230,6 +230,51 @@ double NURBS_Curve::auto_fitting(const std::vector<Eigen::Vector3d>& points, con
   para = std::vector<double>(n);
 
   // 二分法查找精度小于阈值的方式
+  std::pair<size_t, double> bestFit{n,std::numeric_limits<double>::infinity()};
+  for (int mid = order; mid < n + 1; ++mid) {
+    printf("mid = %d\n", mid);
+    activeCtrlPoints = mid;
+    // 设置节点向量
+    set_pinned_uniform_knots();
+    // 最小二乘 NURBS 拟合
+    para = least_squares_fitting(points);
+    // 计算拟合精度
+    double sum = 0;
+    for (size_t i=0; i<para.size(); ++i) {
+      Eigen::Vector3d tmp = get_point(para[i]);
+      sum += (tmp - points[i]).norm();
+    }
+    sum /= n;
+    printf("cur accuracy = %lf\n", sum);
+    // 更新最优的平均拟合精度
+    if (sum < threshold) {
+      bestFit = std::make_pair(mid, sum);
+      break;
+    } else if (sum < bestFit.second) {
+      bestFit = std::make_pair(mid, sum);
+    }
+  }
+
+  // 未能获得满足条件的拟合方式，使用遍历过程中效果最优的拟合
+  if (bestFit.second > threshold && activeCtrlPoints != bestFit.first) {
+    std::cout << "Cannot fitting. bestFit: " << bestFit.first << ", " << bestFit.second << std::endl;
+    activeCtrlPoints = bestFit.first;
+    // 设置节点向量
+    set_pinned_uniform_knots();
+    // 最小二乘 NURBS 拟合
+    para = least_squares_fitting(points);
+  }
+  return bestFit.second;
+}
+
+double NURBS_Curve::auto_fitting_binary(const std::vector<Eigen::Vector3d>& points, const double& threshold) {
+  const size_t n = points.size();
+  if (ctrlPoints.size() < n) {
+    *this = NURBS_Curve(order, n);
+  }
+  para = std::vector<double>(n);
+
+  // 二分法查找精度小于阈值的方式
   int left = order, right = n;
   std::pair<size_t, double> bestFit{n,std::numeric_limits<double>::infinity()};
   while (left <= right) {

@@ -8,7 +8,6 @@ void test_curve();
 void test_surface();
 void test_fitting();
 void test_auto_fitting();
-void test_xmq();
 
 // 记录控制点
 void record_ctrl_points();
@@ -24,15 +23,14 @@ Eigen::MatrixXd pntMat = get_random_matrix(3, numPnts, 0, 10);
 std::vector<Eigen::Vector3d> fitPnt(numPnts);
 
 int main(int argc, char** argv) {
+  read_eigen_from_file("/home/shawn/Downloads/cluoutput.txt", pntMat);
+  pntMat.transposeInPlace();
+  fitPnt = std::vector<Eigen::Vector3d>(pntMat.cols());
+
   // test_curve();
   // test_surface();
   // test_fitting();
-  // test_auto_fitting();
-
-  // Eigen::MatrixXd data = read_eigen_from_file<Eigen::MatrixXd>("/home/shawn/Downloads/points.txt");
-  Eigen::MatrixXd data;
-  read_eigen_from_file("/home/shawn/Downloads/points.txt", data);
-  std::cout << data << std::endl;
+  test_auto_fitting();
 
   return 0;
 }
@@ -40,7 +38,7 @@ int main(int argc, char** argv) {
 void test_auto_fitting() {
   // 随机生成拟合点
   std::cout << "Fitting points:" << std::endl;
-  for (int i=0; i<numPnts; ++i) {
+  for (int i=0; i<pntMat.cols(); ++i) {
     fitPnt[i] = pntMat.col(i);
   }
 
@@ -65,7 +63,7 @@ void test_auto_fitting() {
 void test_fitting() {
   // 随机生成拟合点
   std::cout << "Fitting points:" << std::endl;
-  for (int i=0; i<numPnts; ++i) {
+  for (int i=0; i<pntMat.cols(); ++i) {
     fitPnt[i] = pntMat.col(i);
   }
 
