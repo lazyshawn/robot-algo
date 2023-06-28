@@ -136,14 +136,12 @@ Eigen::Vector3d NURBS_Curve::get_point(double u) const {
   return point / sum;
 }
 
-void NURBS_Curve::discrete_arc_length(std::list<double>& nodePara, std::list<double>::iterator&& begIte, std::list<double>::iterator&& endIte) {
-  // 子区间数量
-  int segmentSize = 10;
-  // 初始化队列
+void NURBS_Curve::discrete_arc_length(std::vector<double>& paraVector, double begPara, double endPara, int numSegment, double terminateCondition) const {
+  // 初始化节点列表
+  std::list<double> paraList = std::list<double>({begPara, endPara});
+  // 初始化访问队列
   std::queue<std::list<double>::iterator> iteQueue;
-  for (std::list<double>::iterator ite=begIte; std::next(ite)!=endIte; ++ite) {
-    iteQueue.push(ite);
-  }
+  iteQueue.push(paraList.begin());
 
   while (!iteQueue.empty()) {
     std::list<double>::iterator ite = iteQueue.front();
@@ -155,59 +153,97 @@ void NURBS_Curve::discrete_arc_length(std::list<double>& nodePara, std::list<dou
     double rawChordLength = (curNode - endNode).norm();
 
     // * 离散化
-    double intervalLen = (end - beg) / segmentSize;
+    double intervalLen = (end - beg) / numSegment;
     double newChordLength = 0.0;
+    // 自区间内的最大弦长
+    double maxSubChordLength = 0.0;
     end = beg;
-    for (size_t i=0; i<segmentSize; ++i) {
+    for (size_t i=0; i<numSegment; ++i) {
       beg = end;
       Eigen::Vector3d preNode = curNode;
       end += intervalLen;
       curNode = get_point(end);
-      newChordLength += (curNode - preNode).norm();
+      double curChordLength = (curNode - preNode).norm();
+      newChordLength += curChordLength;
+      maxSubChordLength = std::max(maxSubChordLength, curChordLength);
     }
 
     // * 更新区间节点
     // 参数区间内曲线长度因细分新增的变化量 (绝对/相对)
     double deltaLength = (newChordLength - rawChordLength)/rawChordLength;
     // double deltaLength = newChordLength - rawChordLength;
-    if (deltaLength > 1e-4) {
+    if (deltaLength > terminateCondition) {
       std::list<double>::iterator tmpIte = ite;
       // 重新将区间起点加入访问队列
       iteQueue.push(tmpIte);
       double cur = *ite;
-      for (size_t i=1; i<segmentSize; ++i) {
+      for (size_t i=1; i<numSegment; ++i) {
         // 插入新的节点
         cur += intervalLen;
-        nodePara.insert(std::next(tmpIte), cur);
+        paraList.insert(std::next(tmpIte), cur);
         // 将新的节点加入访问队列
         tmpIte++;
         iteQueue.push(tmpIte);
       }
-
-      // // 创建新节点的列表
-      // std::list<double> newList;
-      // double cur = *ite;
-      // for (size_t i=1; i<segmentSize; ++i) {
-      //   cur += intervalLen;
-      //   newList.emplace_back(cur);
-      // }
-      // // 插入新的节点
-      // nodePara.splice(std::next(ite), std::move(newList));
-      // // 将新节点加入访问队列
-      // std::list<double>::iterator tmpIte = ite;
-      // for (size_t i=0; i<segmentSize; ++i) {
-      //   iteQueue.push(tmpIte);
-      //   tmpIte++;
-      // }
+    } else {
+      std::list<double>::iterator tmpIte = ite;
+      double cur = *ite;
+      for (size_t i=1; i<numSegment; ++i) {
+        // 插入新的节点
+        cur += intervalLen;
+        paraList.insert(std::next(tmpIte), cur);
+        tmpIte++;
+      }
     } // if (newChordLength - rawChordLength)
 
-  } // for (iteVector)
+  } // while (!iteQueue.empty())
+
+  // 将节点列表转化为向量形式
+  paraVector = std::vector<double>(std::make_move_iterator(paraList.begin()), std::make_move_iterator(paraList.end()));
 
 } // discrete_arc_length()
 
-double NURBS_Curve::get_curve_length(double threshold) { return 0; }
+double NURBS_Curve::get_chord_length(const std::vector<double>& nodePara, std::vector<double>& cumuChordLength) const {
+  cumuChordLength.clear();
+  cumuChordLength.reserve(nodePara.size());
 
-void NURBS_Curve::get_uniform_sample(std::vector<double> &para, double length, double threshold) {
+  double length = 0.0;
+  Eigen::Vector3d end = get_point(*nodePara.begin());
+  for (auto& ite : nodePara) {
+    Eigen::Vector3d beg = end;
+    end = get_point(ite);
+    length += (beg-end).norm();
+    cumuChordLength.emplace_back(length);
+  }
+  return length;
+}
+
+std::vector<double> NURBS_Curve::get_uniform_sample(
+    const std::vector<double>& paraVec, const std::vector<double>& cumuChordLength, double length, double threshold) const{
+  // 采样点对应的参数值
+  std::vector<double> uniformParaVector;
+
+  double curveLength = *(cumuChordLength.end() - 1);
+  int numSegment = std::ceil(curveLength / length);
+  // 分段长度
+  double detLen = curveLength / numSegment, curChordLength = 0.0;
+  size_t curSegmentIdx = 0;
+  for (size_t i = 0; i < paraVec.size(); ++i) {
+    if (cumuChordLength[i] > curChordLength) {
+      uniformParaVector.emplace_back(paraVec[i-1]);
+      curSegmentIdx++;
+      // 间隔更接近给定值，但最后一段会更短
+      // curChordLength = cumuChordLength[i-1] + detLen;
+      // 整体间隔更均匀，但间隔可能大于给定值，超出的范围取决于曲线离散化程度
+      curChordLength = curSegmentIdx * detLen;
+      // std::cout << "idx = " << i - 1 << ", " << cumuChordLength[i - 1] << std::endl;
+    }
+  }
+  uniformParaVector.emplace_back(*(paraVec.end()-1));
+  return uniformParaVector;
+}
+
+void NURBS_Curve::get_uniform_sample(std::vector<double> &paraVec, double length, double threshold) {
   // 节点处的累积弦长
   std::vector<double> cumulativeLength(1e5, 0.0);
   // * 参数区间离散化
@@ -247,19 +283,19 @@ void NURBS_Curve::get_uniform_sample(std::vector<double> &para, double length, d
   int num = std::ceil(curveLength / length);
   // 分段长度
   double detLen = curveLength / num;
-  para = std::vector<double>();
-  para.reserve(num + 1);
+  paraVec = std::vector<double>();
+  paraVec.reserve(num + 1);
 
   size_t curSegmentIdx = 0;
   for (size_t i = 0; i < sepNum; ++i) {
     if (cumulativeLength[i] > curSegmentIdx * detLen) {
-      para.emplace_back((i - 1) * sepPara);
+      paraVec.emplace_back((i - 1) * sepPara);
       curSegmentIdx++;
       // std::cout << "idx = " << i - 1 << ", " << cumulativeLength[i - 1] << std::endl;
     }
   }
-  para.emplace_back(1);
-}
+  paraVec.emplace_back(1);
+} // get_uniform_sample()
 
 std::vector<double> NURBS_Curve::least_squares_fitting(const std::vector<Eigen::Vector3d>& points) {
   const int n = points.size(), m = activeCtrlPoints - 1;
