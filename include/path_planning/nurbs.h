@@ -4,6 +4,7 @@
 #include <memory>
 #include <eigen3/Eigen/Dense>
 #include <eigen3/Eigen/Sparse>
+#include <queue>
 
 class NURBS_Curve {
 public:
@@ -55,12 +56,22 @@ public:
   */
   Eigen::Vector3d get_point(double u) const;
 
+  void discrete_arc_length(std::list<double>& nodePara);
+  void discrete_arc_length(std::list<double>& nodePara, std::list<double>::iterator&& begIte, std::list<double>::iterator&& endIte);
+
+  /* 
+  * @brief : 获取曲线长度
+  * @param : threshold - 曲线长度增量阈值
+  * @return: 
+  */
+  double get_curve_length(double threshold = 1e-1);
+
   /* 
   * @brief : 均匀采样
   * @param : length - NURBS 曲线上的采样间隔
-  * @return: 
+  * @return: para - 采样节点对应的参数值
   */
-  void get_uniform_sample(double length, double threshold);
+  void get_uniform_sample(std::vector<double>& para, double length, double threshold);
 
   /* 
   * @brief : 利用 Nurbs 曲线进行最小二乘拟合，修改曲线的控制点和权重

@@ -23,19 +23,20 @@ Eigen::MatrixXd pntMat = get_random_matrix(3, numPnts, 0, 10);
 std::vector<Eigen::Vector3d> fitPnt(numPnts);
 
 int main(int argc, char** argv) {
-  read_eigen_from_file("/home/shawn/Downloads/cluoutput.txt", pntMat);
-  pntMat.transposeInPlace();
-  fitPnt = std::vector<Eigen::Vector3d>(pntMat.cols());
-
-  // test_curve();
+  test_curve();
   // test_surface();
   // test_fitting();
-  test_auto_fitting();
+  // test_auto_fitting();
 
   return 0;
 }
 
 void test_auto_fitting() {
+  // 从文件读取拟合点
+  // read_eigen_from_file("/home/shawn/Downloads/cluoutput.txt", pntMat);
+  // pntMat.transposeInPlace();
+  // fitPnt = std::vector<Eigen::Vector3d>(pntMat.cols());
+
   // 随机生成拟合点
   std::cout << "Fitting points:" << std::endl;
   for (int i=0; i<pntMat.cols(); ++i) {
@@ -154,7 +155,7 @@ void test_surface() {
 void test_curve() {
   std::cout << "Control points:\n" << pntMat << std::endl;
   curve = NURBS_Curve(4, numPnts);
-  for (int i=0; i<pntMat.cols(); ++i) {
+  for (int i=0; i<numPnts; ++i) {
     curve.ctrlPoints[i] = pntMat.col(i);
   }
   // 设置控制点权重
@@ -171,6 +172,29 @@ void test_curve() {
   std::cout << "\n===> Get points on curve:" << std::endl;
   Eigen::Vector3d point = curve.get_point(0.5);
   std::cout << point << std::endl;
+
+  // double length = curve.get_curve_length();
+  // std::cout << "length = " << length << std::endl;
+  std::vector<double> paraU;
+  Timer timer;
+  timer.start();
+  curve.get_uniform_sample(paraU, 20, 0.2);
+  std::cout << "time = " << timer.ms_since_starting() << std::endl;;
+
+  std::list<double> para{0,1};
+  timer.record();
+  curve.discrete_arc_length(para, para.begin(), para.end());
+  Eigen::Vector3d beg, end;
+  double length = 0.0;
+  end = curve.get_point(*para.begin());
+  for (std::list<double>::iterator ite=para.begin(); std::next(ite)!=para.end(); ++ite) {
+    beg = end;
+    end = curve.get_point(*std::next(ite));
+    length += (beg-end).norm();
+  }
+  std::cout << "\ntime = " << timer.ms_since_last() << std::endl;;
+  std::cout << "length = " << length << std::endl;
+  std::cout << "size = " << para.size() << std::endl;
 
   // 记录控制点
   record_ctrl_points();

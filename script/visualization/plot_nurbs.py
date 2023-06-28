@@ -1,7 +1,7 @@
 import sys, os
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
-from IO.matrixIO import read_data_from_txt
+from user_interface.matrixIO import read_data_from_txt
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -57,8 +57,8 @@ if __name__ == "__main__":
     ax.set_zlabel('Z')
     colorMap = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
 
-    plot_fit(ax)
-    #  plot_curve(ax)
+    #  plot_fit(ax)
+    plot_curve(ax)
     #  plot_surface(ax)
 
     ax.legend()
