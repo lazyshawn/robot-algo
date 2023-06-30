@@ -7,6 +7,9 @@ def read_data_from_txt(fname, **readFlag):
     '''
     try:
         points = np.loadtxt(fname, **readFlag)
+        # 将一行的数据转化为二维数组
+        if (points.ndim == 1):
+            points = np.reshape(points, (1, points.size))
     except IOError:
         print("File is not accessible: ", fname)
         points = np.empty(0)
