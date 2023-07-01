@@ -89,9 +89,8 @@ def plot_mesh_from_off(fname, ax):
     # 表面转换为三角形
     triangles = []
     for face in faces:
-        for i in range(1, len(face) - 1):
-            triangle = [vertices[face[0]], vertices[face[i]], vertices[face[i+1]]]
-            triangles.append(triangle)
+        triangle = [vertices[face[0]], vertices[face[1]], vertices[face[2]]]
+        triangles.append(triangle)
 
     mesh = Poly3DCollection(triangles, alpha = 0.3)
     ax.add_collection3d(mesh)
