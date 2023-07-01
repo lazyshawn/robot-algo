@@ -17,7 +17,7 @@ void PRM_Scene::load_scene(const std::vector<double>& obstacle) {
   }
 }
 
-bool PRM_Scene::check_config_collision(config_type config) {
+bool PRM_Scene::check_config_collision(const config_type& config) {
   for (size_t i=0; i<obsPos.size(); ++i) {
     if ((obsPos[i] - config).norm() < radius[i]) {
       return true;
@@ -26,12 +26,12 @@ bool PRM_Scene::check_config_collision(config_type config) {
   return false;
 }
 
-bool PRM_Scene::check_config_visibility(config_type configA, config_type configB) {
+bool PRM_Scene::check_config_visibility(const config_type& configA, const config_type& configB, double resolution) {
   // 离散点数量
-  int segment = 100;
-  double det = 1.0 / segment;
+  int num = std::ceil((configA - configB).norm() / resolution);
+  double det = 1.0 / num;
   // 判断可见性，等价于判断离散点是否在障碍物内
-  for (size_t i=1; i<segment; ++i) {
+  for (size_t i=1; i<num; ++i) {
     double lamb = det * i;
     config_type tmp = lamb * configA + (1 - lamb) * configB;
     if (check_config_collision(tmp)) return false;
@@ -50,16 +50,22 @@ config_type PRM_Scene::sample_collision_free_config() {
   return sample;
 }
 
+PRM_Node::PRM_Node(config_type config_, NodeType nodeType, size_t idx_) {
+  config = config_;
+  type = nodeType;
+  idx = idx_;
+}
+
+void PRM_Graph::add_node(const config_type& config, PRM_Node::NodeType nodeType) {
+  node.emplace_back(PRM_Node(config, nodeType, nodeIdx++));
+}
+
 PRM_Planner::PRM_Planner(const std::vector<double>& obstacle) {
   scene = std::make_unique<PRM_Scene>(obstacle);
   roadmap = std::make_unique<PRM_Graph>();
 }
 
 void PRM_Planner::construct_visib_roadmap(int maxTry) {
-  // 节点
-  std::vector<config_type> connection;
-  std::list<std::list<config_type>> guardList;
-
   // 开始采样节点
   size_t numTry = 0;
   while (numTry < maxTry) {
@@ -67,36 +73,33 @@ void PRM_Planner::construct_visib_roadmap(int maxTry) {
     config_type sample = scene->sample_collision_free_config();
 
     // 上一个可见节点
-    std::vector<config_type> gVis;
+    std::vector<size_t> gVis;
     // 上一个可见的连同分量
-    std::list<std::list<config_type>>::iterator compIte;
+    std::list<std::list<size_t>>::iterator compIte;
     bool findConnection = false;
     // 开始遍历连通分量
-    for (std::list<std::list<config_type>>::iterator ite=guardList.begin(); ite!=guardList.end(); ++ite) {
-      std::list<config_type>& components = *ite;
+    for (std::list<std::list<size_t>>::iterator ite=guardList.begin(); ite!=guardList.end(); ++ite) {
+      std::list<size_t>& components = *ite;
       bool findVis = false;
 
       // 开始遍历节点
       for (auto& node : components) {
         // 判断可见性
-        if (scene->check_config_visibility(node, sample)) {
+        if (scene->check_config_visibility(roadmap->node[node].config, sample)) {
           findVis = true;
           if (gVis.empty()) {
-            // 记录可以看见采样点的 guard 节点
+            // 记录可以看见采样点的 guard 节点和连同分量
             gVis.emplace_back(node);
             compIte = ite;
           } else {
             findConnection = true;
             // 采样点连接了两个 guard 节点, 属于 connection 节点
-            connection.emplace_back(sample);
+            add_connection(sample);
             // 合并连通分量
-            (*compIte).splice((*compIte).end(), (*ite));
-            guardList.erase(ite);
+            merge_connected_component(compIte, ite);
             // 记录新生成的边
-            // edges.emplace_back(gVis[0]);
-            // edges.emplace_back(sample);
-            // edges.emplace_back(node);
-            PRM_Node node(sample, PRM_NodeType::CONNECTION);
+            add_edge(gVis[0], roadmap->node.size()-1);
+            add_edge(node, roadmap->node.size()-1);
           }
         } // for (node)
         // 找到可见的 guard 节点，跳出当前连同分量
@@ -109,7 +112,7 @@ void PRM_Planner::construct_visib_roadmap(int maxTry) {
     // 采样点是 guard 节点
     if (gVis.empty()) {
       std::cout << "Get new guard: " << sample.transpose() << std::endl;
-      guardList.emplace_back(std::list<config_type>({sample}));
+      add_guard(sample);
       numTry = 0;
     } else {
       numTry++;
@@ -117,7 +120,24 @@ void PRM_Planner::construct_visib_roadmap(int maxTry) {
   }
 }
 
-PRM_Node::PRM_Node(config_type config_, PRM_NodeType nodeType) {
-  config = config_;
-  type = nodeType;
+void PRM_Planner::merge_connected_component(std::list<std::list<size_t>>::iterator& compA, std::list<std::list<size_t>>::iterator& compB) {
+  (*compA).splice((*compA).end(), (*compB));
+  guardList.erase(compB);
 }
+
+void PRM_Planner::add_connection(const config_type& config) {
+  roadmap->add_node(config, PRM_Node::NodeType::CONNECTION);
+  // 记录新生成的 connection 节点序号
+  connection.emplace_back(roadmap->node.size() - 1);
+}
+
+void PRM_Planner::add_guard(const config_type& config) {
+  roadmap->add_node(config, PRM_Node::NodeType::GUARD);
+  // 新增连同分量序列
+  guardList.emplace_back(std::list<size_t>({roadmap->node.size() - 1}));
+}
+
+void PRM_Planner::add_edge(size_t nodeA, size_t nodeB) {
+  edge.emplace_back(std::array<size_t,2>({nodeA, nodeB}));
+}
+

@@ -37,9 +37,9 @@ def plot_edge(ax):
     fname = "build/data/prm_edge"
     points = read_data_from_txt(fname).transpose()
     if (len(points)):
-        numEdge = int(len(points[0]) / 3)
+        numEdge = int(len(points[0]) / 2)
         for i in range(numEdge):
-            edge = points[:,3*i:3*i+3]
+            edge = points[:,2*i:2*i+2]
             ax.plot(edge[0,:], edge[1,:], color='k', lw=1)
 
 
