@@ -219,7 +219,7 @@ double NURBS_Curve::get_chord_length(const std::vector<double>& nodePara, std::v
 }
 
 std::vector<double> NURBS_Curve::get_uniform_sample(
-    const std::vector<double>& paraVec, const std::vector<double>& cumuChordLength, double length, double threshold) const{
+    const std::vector<double>& samplePara, const std::vector<double>& cumuChordLength, double length, double threshold) const{
   // 采样点对应的参数值
   std::vector<double> uniformParaVector;
 
@@ -228,9 +228,9 @@ std::vector<double> NURBS_Curve::get_uniform_sample(
   // 分段长度
   double detLen = curveLength / numSegment, curChordLength = 0.0;
   size_t curSegmentIdx = 0;
-  for (size_t i = 0; i < paraVec.size(); ++i) {
+  for (size_t i = 0; i < samplePara.size(); ++i) {
     if (cumuChordLength[i] > curChordLength) {
-      uniformParaVector.emplace_back(paraVec[i-1]);
+      uniformParaVector.emplace_back(samplePara[i-1]);
       curSegmentIdx++;
       // 间隔更接近给定值，但最后一段会更短
       // curChordLength = cumuChordLength[i-1] + detLen;
@@ -239,62 +239,16 @@ std::vector<double> NURBS_Curve::get_uniform_sample(
       // std::cout << "idx = " << i - 1 << ", " << cumuChordLength[i - 1] << std::endl;
     }
   }
-  uniformParaVector.emplace_back(*(paraVec.end()-1));
+  uniformParaVector.emplace_back(*(samplePara.end()-1));
   return uniformParaVector;
 }
 
-void NURBS_Curve::get_uniform_sample(std::vector<double> &paraVec, double length, double threshold) {
-  // 节点处的累积弦长
-  std::vector<double> cumulativeLength(1e5, 0.0);
-  // * 参数区间离散化
-  double curveLength = std::numeric_limits<double>::infinity(), sepPara = 1.0;
-  // 间隔段数
-  int sepNum = 100;
-  // 计算总长度
-  for (size_t iteration = 0; iteration < 6; ++iteration) {
-    double curPara = 0, curLength = 0.0;
-    Eigen::Vector3d cur = get_point(curPara), pre;
-    sepPara = 1.0 / sepNum;
-
-    // 计算曲线长度
-    for (size_t i = 0; i < sepNum; ++i) {
-      pre = cur;
-      curPara += sepPara;
-      cur = get_point(curPara);
-      double len = (cur - pre).norm();
-      curLength += len;
-      cumulativeLength[i + 1] = curLength;
-    } // for (sepNum)
-
-    std::cout << "cur len = " << curLength << std::endl;
-    // 终止条件
-    if (std::fabs(curveLength - curLength) < threshold) {
-      curveLength = curLength;
-      break;
-    }
-
-    // 更新循环变量
-    curveLength = curLength;
-    sepNum *= 10;
-  } // for (iteration)
-
-  // * 查找分隔点对应的参数
-  // 分段数
-  int num = std::ceil(curveLength / length);
-  // 分段长度
-  double detLen = curveLength / num;
-  paraVec = std::vector<double>();
-  paraVec.reserve(num + 1);
-
-  size_t curSegmentIdx = 0;
-  for (size_t i = 0; i < sepNum; ++i) {
-    if (cumulativeLength[i] > curSegmentIdx * detLen) {
-      paraVec.emplace_back((i - 1) * sepPara);
-      curSegmentIdx++;
-      // std::cout << "idx = " << i - 1 << ", " << cumulativeLength[i - 1] << std::endl;
-    }
-  }
-  paraVec.emplace_back(1);
+void NURBS_Curve::get_uniform_sample(std::vector<double> &samplePara, double length, double threshold) {
+  std::vector<double> paraVec;
+  discrete_arc_length(paraVec, 0, 1);
+  std::vector<double> cumuChordLength;
+  get_chord_length(paraVec, cumuChordLength);
+  samplePara = get_uniform_sample(paraVec, cumuChordLength, length);
 } // get_uniform_sample()
 
 std::vector<double> NURBS_Curve::least_squares_fitting(const std::vector<Eigen::Vector3d>& points) {

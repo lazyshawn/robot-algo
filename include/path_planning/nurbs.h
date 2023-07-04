@@ -76,14 +76,15 @@ public:
 
   /* 
   * @brief : 按照给定的曲线长度获取均匀采样点
-  * @param : paraVec - 离散化后节点的参数向量
+  * @param : samplePara - 离散化后节点的参数向量
   * @param : cumuChordLength - 离散化后累加到节点处的弦长之和
   * @param : length - 每段曲线的长度
   * @param : threshold - (unused)
   * @return: 采样后节点对应的参数向量
   */
-  void get_uniform_sample(std::vector<double>& paraVec, double length, double threshold = 1e-1);
-  std::vector<double> get_uniform_sample(const std::vector<double>& paraVec, const std::vector<double>& cumuChordLength, double length, double threshold = 1e-1) const;
+  void get_uniform_sample(std::vector<double>& samplePara, double length, double threshold = 1e-1);
+  std::vector<double> get_uniform_sample(const std::vector<double>& samplePara, const std::vector<double>& cumuChordLength,
+                                         double length, double threshold = 1e-1) const;
 
   /* 
   * @brief : 利用 Nurbs 曲线进行最小二乘拟合，修改曲线的控制点和权重
