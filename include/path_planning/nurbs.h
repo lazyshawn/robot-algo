@@ -5,6 +5,7 @@
 #include <eigen3/Eigen/Dense>
 #include <eigen3/Eigen/Sparse>
 #include <queue>
+#include <optional>
 
 class NURBS_Curve {
 public:
@@ -82,7 +83,7 @@ public:
   * @param : threshold - (unused)
   * @return: 采样后节点对应的参数向量
   */
-  void get_uniform_sample(std::vector<double>& samplePara, double length, double threshold = 1e-1);
+  std::vector<double> get_uniform_sample(double length, double threshold = 1e-1);
   std::vector<double> get_uniform_sample(const std::vector<double>& samplePara, const std::vector<double>& cumuChordLength,
                                          double length, double threshold = 1e-1) const;
 

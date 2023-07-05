@@ -1,5 +1,4 @@
 #include "nurbs.h"
-#include "iostream"
 
 NURBS_Curve::NURBS_Curve(int order_, int num) {
   order = order_, degree = order - 1;
@@ -243,12 +242,13 @@ std::vector<double> NURBS_Curve::get_uniform_sample(
   return uniformParaVector;
 }
 
-void NURBS_Curve::get_uniform_sample(std::vector<double> &samplePara, double length, double threshold) {
+std::vector<double> NURBS_Curve::get_uniform_sample(double length, double threshold) {
   std::vector<double> paraVec;
   discrete_arc_length(paraVec, 0, 1);
   std::vector<double> cumuChordLength;
   get_chord_length(paraVec, cumuChordLength);
-  samplePara = get_uniform_sample(paraVec, cumuChordLength, length);
+  std::vector<double> samplePara = get_uniform_sample(paraVec, cumuChordLength, length);
+  return samplePara;
 } // get_uniform_sample()
 
 std::vector<double> NURBS_Curve::least_squares_fitting(const std::vector<Eigen::Vector3d>& points) {
