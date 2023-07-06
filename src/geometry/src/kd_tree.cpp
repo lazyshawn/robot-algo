@@ -1,4 +1,4 @@
-#include "kd_tree.h"
+#include "geometry/kd_tree.h"
 
 KdNode::KdNode(const Eigen::Vector3d& point_) {
   point = point_;

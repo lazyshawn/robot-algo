@@ -1,6 +1,6 @@
 // convex_decomposition
-#include "convex_decomposition.h"
-#include "user_interface.h"
+#include "convex_decomposition/convex_decomposition.h"
+#include "user_interface/user_interface.h"
 
 #include <random>
 #include <ctime>

@@ -1,6 +1,5 @@
-#include "genetic_algo.h"
-
-#include "user_interface.h"
+#include "heuristics/genetic_algo.h"
+#include "user_interface/user_interface.h"
 
 // TSP 问题建模
 int main(int argc, char **argv) {

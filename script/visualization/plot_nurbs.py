@@ -1,17 +1,23 @@
+import sys, os
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
+
+from user_interface.matrixIO import read_data_from_txt
+
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
 def plot_curve(ax):
     # 读取 cpp 生成的测试数据，在项目根目录下运行`script/..`
-    mat = np.loadtxt("build/data/nurbs_curve_output").transpose()
-    # 绘制 NURBS 曲线
-    ax.plot(mat[0,:], mat[1,:], mat[2,:], label='NURBS curve')
+    mat = read_data_from_txt("build/data/nurbs_curve_output").transpose()
+    if (len(mat)):
+        # 绘制 NURBS 曲线
+        ax.plot(mat[0,:], mat[1,:], mat[2,:], label='NURBS curve')
 
-    points = np.loadtxt("build/data/nurbs_curve_ctrlpoint").transpose()
-    print(points)
-    ax.scatter(points[0,:], points[1,:], points[2,:], c = 'r', marker = 's', s = 30, label='Ctrl points')
-    ax.plot(points[0,:], points[1,:], points[2,:], c = 'r', dashes=[1,1])
+    points = read_data_from_txt("build/data/nurbs_curve_ctrlpoint").transpose()
+    if(len(points) and len(points[0]) < 20):
+        ax.scatter(points[0,:], points[1,:], points[2,:], c = 'r', marker = 's', s = 30, label='Ctrl points')
+        ax.plot(points[0,:], points[1,:], points[2,:], c = 'r', dashes=[1,1])
 
 def plot_surface(ax):
     # 绘制控制点
@@ -39,9 +45,9 @@ def plot_surface(ax):
 
 def plot_fit(ax):
     plot_curve(ax)
-    points = np.loadtxt("build/data/nurbs_curve_fitpoint").transpose()
-    print(points)
-    ax.scatter(points[0,:], points[1,:], points[2,:], c = 'c', marker = 's', s = 30, label='Fitting points')
+    points = read_data_from_txt("build/data/nurbs_curve_fitpoint").transpose()
+    if(len(points)):
+        ax.scatter(points[0,:], points[1,:], points[2,:], c = 'c', marker = 's', s = 3, label='Fitting points')
 
 if __name__ == "__main__":
     fig = plt.figure('空间三角形',figsize=(8,6))
@@ -51,8 +57,8 @@ if __name__ == "__main__":
     ax.set_zlabel('Z')
     colorMap = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
 
-    plot_fit(ax)
-    #  plot_curve(ax)
+    #  plot_fit(ax)
+    plot_curve(ax)
     #  plot_surface(ax)
 
     ax.legend()

@@ -1,4 +1,4 @@
-#include "gjk.h"
+#include "collision_detection/gjk.h"
 
 const double posInf = std::numeric_limits<double>::infinity();
 const double negInf = -std::numeric_limits<double>::infinity();

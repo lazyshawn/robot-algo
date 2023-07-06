@@ -53,13 +53,22 @@ target_link_libraries(test_kdtree PUBLIC
   user_interface
 )
 
+add_executable(test_probabilistic_roadmap
+  test_probabilistic_roadmap.cpp
+)
+target_link_libraries(test_probabilistic_roadmap PUBLIC
+  prm
+  user_interface
+)
+
 set(test_bins
-  test_gjk
-  test_qkhull
-  test_algebra
+  # test_gjk
+  # test_qkhull
+  # test_algebra
+  # test_probabilistic_roadmap
 )
 install(TARGETS ${test_bins}
-  LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-  RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
-  ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
+  ARCHIVE DESTINATION lib
 )

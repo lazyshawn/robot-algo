@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.15)
-project(robot_algo)
+project(RobotAlgo VERSION 1.0.0)
 
 set(CMAKE_CXX_STANDARD 17)
 # Support degug
 SET(CMAKE_CXX_FLAGS_DEBUG "$ENV{CXXFLAGS} -O0 -Wall -g2 -ggdb")
-SET(CMAKE_CXX_FLAGS_RELEASE {CXXFLAGS} -O3 -Wall)
+# SET(CMAKE_CXX_FLAGS_RELEASE {CXXFLAGS} -O3 -Wall)
 SET(CMAKE_BUILD_TYPE "Debug")
 
 if(WIN32)
@@ -20,9 +20,12 @@ if(WIN32)
   # Set the runtime lib for MSCV (global)
   set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 else()
+  # Set the installation directory
+  SET(CMAKE_INSTALL_PREFIX "${PROJECT_BINARY_DIR}/out/${PROJECT_NAME}-${CMAKE_BUILD_TYPE}")
   option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 endif()
 
 # include_directories(include)
 
 add_subdirectory(src)
+
