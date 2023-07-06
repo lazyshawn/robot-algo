@@ -1,10 +1,6 @@
 // collision_detection
-#include "gjk.h"
-#include "user_interface.h"
-#include <iostream>
-
-#include <random>
-#include <ctime>
+#include "collision_detection/gjk.h"
+#include "user_interface/user_interface.h"
  
 
 int main(int argc, char** argv) {

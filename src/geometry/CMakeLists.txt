@@ -1,44 +1,63 @@
 # geometry_lib
 add_library(algebra
-  algebra.cpp
-)
-set_target_properties(algebra PROPERTIES
-  INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/include/geometry"
-)
-# Usage requirement of lib
-target_include_directories(algebra
-  INTERFACE ${PROJECT_SOURCE_DIR}/include/geometry
+  src/algebra.cpp
 )
 
+# set_target_properties(user_interface PROPERTIES
+#   INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/include"
+#   LINK_DIRECTORIES "${CMAKE_SOURCE_DIR}/lib"
+# )
+
+# Then, link libraries
+# target_link_libraries(yourlibrary PUBLIC Qt6::Core Qt6::Widgets)
+
+# Then, carefully add your include directories. All of your `target_include_directories` must look like this
+target_include_directories(algebra PUBLIC
+  # include directory in your build tree
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  # include directory when installed
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+)
+
+###############################################################################
 add_library(kd_tree
-  kd_tree.cpp
-)
-set_target_properties(kd_tree PROPERTIES
-  INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/include/geometry"
-)
-target_link_libraries(kd_tree PUBLIC
-  algebra
-)
-# Usage requirement of lib
-target_include_directories(kd_tree
-  INTERFACE ${PROJECT_SOURCE_DIR}/include/geometry
+  src/kd_tree.cpp
 )
 
-# Install include files
-file(GLOB_RECURSE geometry_headers
-  ${PROJECT_SOURCE_DIR}/include/geometry/*.h
-)
-install(FILES ${geometry_headers} DESTINATION
-  include/geometry
+# set_target_properties(user_interface PROPERTIES
+#   INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/include"
+#   LINK_DIRECTORIES "${CMAKE_SOURCE_DIR}/lib"
+# )
+
+# Then, link libraries
+target_link_libraries(kd_tree PUBLIC algebra)
+
+# Then, carefully add your include directories. All of your `target_include_directories` must look like this
+target_include_directories(kd_tree PUBLIC
+  # include directory in your build tree
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  # include directory when installed
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
-# Install all lib in the package
+
+###############################################################################
+# Install package
+###############################################################################
+# Install public include files
+install(DIRECTORY include/user_interface
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} FILES_MATCHING PATTERN "*.hpp" PATTERN "*.h"
+)
+
+# We add `yourlibrary` target into the export set.
+# The export set will contain all targets to be imported by the other project.
+# It also installs the library to the install script so they are installed:
 set(geometry_libs
   algebra
   kd_tree
 )
-install(TARGETS ${geometry_libs}
-  LIBRARY DESTINATION lib
-  RUNTIME DESTINATION bin
-  ARCHIVE DESTINATION lib
+install(TARGETS ${geometry_libs} EXPORT RobotAlgoTargets
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )

@@ -1,5 +1,5 @@
 // convex_decomposition
-#include "quickhull.h"
+#include "convex_decomposition/quickhull.h"
 
 const double posInf = std::numeric_limits<double>::infinity();
 const double negInf = -std::numeric_limits<double>::infinity();

@@ -1,41 +1,60 @@
 # path_planning_lib
 add_library(nurbs
-  nurbs.cpp
-)
-set_target_properties(nurbs PROPERTIES
-  INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/include/path_planning"
-)
-# Usage requirement of lib
-target_include_directories(nurbs
-  INTERFACE ${PROJECT_SOURCE_DIR}/include/path_planning
+  src/nurbs.cpp
 )
 
+# set_target_properties(user_interface PROPERTIES
+#   INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/include"
+#   LINK_DIRECTORIES "${CMAKE_SOURCE_DIR}/lib"
+# )
+
+# Then, link libraries
+# target_link_libraries(yourlibrary PUBLIC Qt6::Core Qt6::Widgets)
+
+# Then, carefully add your include directories. All of your `target_include_directories` must look like this
+target_include_directories(nurbs PUBLIC
+  # include directory in your build tree
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  # include directory when installed
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+)
+
+###############################################################################
 add_library(prm
-  probabilistic_roadmap.cpp
-)
-set_target_properties(prm PROPERTIES
-  INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/include/path_planning"
-)
-# Usage requirement of lib
-target_include_directories(prm
-  INTERFACE ${PROJECT_SOURCE_DIR}/include/path_planning
-)
-target_link_libraries(prm PUBLIC
-  user_interface
+  src/probabilistic_roadmap.cpp
 )
 
-# Install include files
-file(GLOB_RECURSE path_planning_headers
-  ${PROJECT_SOURCE_DIR}/include/path_planning/*.h
-)
-install(FILES ${path_planning_headers} DESTINATION 
-  include/path_planning
+# set_target_properties(user_interface PROPERTIES
+#   INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/include"
+#   LINK_DIRECTORIES "${CMAKE_SOURCE_DIR}/lib"
+# )
+
+# Then, link libraries
+target_link_libraries(prm PUBLIC user_interface)
+
+# Then, carefully add your include directories. All of your `target_include_directories` must look like this
+target_include_directories(prm PUBLIC
+  # include directory in your build tree
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  # include directory when installed
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
-# Install all lib in the package
+
+###############################################################################
+# Install package
+###############################################################################
+# Install public include files
+install(DIRECTORY include/path_planning
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} FILES_MATCHING PATTERN "*.hpp" PATTERN "*.h"
+)
+
+# We add `yourlibrary` target into the export set.
+# The export set will contain all targets to be imported by the other project.
+# It also installs the library to the install script so they are installed:
 set(path_planning_libs nurbs prm)
-install(TARGETS ${path_planning_libs}
-  LIBRARY DESTINATION lib
-  RUNTIME DESTINATION bin
-  ARCHIVE DESTINATION lib
+install(TARGETS ${path_planning_libs} EXPORT RobotAlgoTargets
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )

@@ -1,4 +1,4 @@
-#include "probabilistic_roadmap.h"
+#include "path_planning/probabilistic_roadmap.h"
 
 PRM_Scene::PRM_Scene(const std::vector<double>& sceneConfig) {
   length = sceneConfig[0];

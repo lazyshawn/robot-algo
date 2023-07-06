@@ -1,6 +1,6 @@
 
-#include "kd_tree.h"
-#include "user_interface.h"
+#include "geometry/kd_tree.h"
+#include "user_interface/user_interface.h"
 
 int main(int argc, char** argv) {
   // 生成随机测试数据

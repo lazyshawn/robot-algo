@@ -1,5 +1,5 @@
-#include "algebra.h"
-#include "user_interface.h"
+#include "geometry/algebra.h"
+#include "user_interface/user_interface.h"
 
 int main(int argc, char** argv) {
   int numPoints = 10;

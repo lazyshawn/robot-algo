@@ -62,10 +62,10 @@ target_link_libraries(test_probabilistic_roadmap PUBLIC
 )
 
 set(test_bins
-  test_gjk
-  test_qkhull
-  test_algebra
-  test_probabilistic_roadmap
+  # test_gjk
+  # test_qkhull
+  # test_algebra
+  # test_probabilistic_roadmap
 )
 install(TARGETS ${test_bins}
   LIBRARY DESTINATION lib

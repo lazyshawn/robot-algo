@@ -1,4 +1,4 @@
-#include "nurbs.h"
+#include "path_planning/nurbs.h"
 
 NURBS_Curve::NURBS_Curve(int order_, int num) {
   order = order_, degree = order - 1;
@@ -353,8 +353,7 @@ double NURBS_Curve::auto_fitting(const std::vector<Eigen::Vector3d> &points,
 
   // 未能获得满足条件的拟合方式，使用遍历过程中效果最优的拟合
   if (bestFit.second > threshold && activeCtrlPoints != bestFit.first) {
-    std::cout << "Cannot fitting. bestFit: " << bestFit.first << ", "
-              << bestFit.second << std::endl;
+    // std::cout << "Cannot fitting. bestFit: " << bestFit.first << ", " << bestFit.second << std::endl;
     activeCtrlPoints = bestFit.first;
     // 设置节点向量
     set_pinned_uniform_knots();
@@ -411,8 +410,7 @@ NURBS_Curve::auto_fitting_binary(const std::vector<Eigen::Vector3d> &points,
 
   // 未能获得满足条件的拟合方式，使用遍历过程中效果最优的拟合
   if (bestFit.second > threshold && activeCtrlPoints != bestFit.first) {
-    std::cout << "Cannot fitting. bestFit: " << bestFit.first << ", "
-              << bestFit.second << std::endl;
+    // std::cout << "Cannot fitting. bestFit: " << bestFit.first << ", " << bestFit.second << std::endl;
     activeCtrlPoints = bestFit.first;
     // 设置节点向量
     set_pinned_uniform_knots();

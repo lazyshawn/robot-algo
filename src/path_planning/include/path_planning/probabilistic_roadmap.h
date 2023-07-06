@@ -4,7 +4,7 @@
 #include <eigen3/Eigen/Dense>
 #include <memory>
 
-#include "user_interface.h"
+#include "user_interface/user_interface.h"
 
 typedef Eigen::Vector2d config_type;
 

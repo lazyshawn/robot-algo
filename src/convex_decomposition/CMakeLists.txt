@@ -1,28 +1,39 @@
 # convex_decomposition_lib
 add_library(quickhull
-  quickhull.cpp
-)
-set_target_properties(quickhull PROPERTIES
-  INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/include/convex_decomposition"
-)
-# Specify the dependencies for a lib
-target_link_libraries(quickhull algebra)
-# Usage requirement of lib
-target_include_directories(quickhull
-  INTERFACE ${PROJECT_SOURCE_DIR}/include/convex_decomposition
-)
-# Install include files
-file(GLOB_RECURSE COLLISION_DETECTION_HEADERS 
-  ${PROJECT_SOURCE_DIR}/include/convex_decomposition/*.h
-)
-install(FILES ${COLLISION_DETECTION_HEADERS} DESTINATION 
-  include/convex_decomposition
+  src/quickhull.cpp
 )
 
-# Install all lib in the package
+# set_target_properties(user_interface PROPERTIES
+#   INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/include"
+#   LINK_DIRECTORIES "${CMAKE_SOURCE_DIR}/lib"
+# )
+
+# Then, link libraries
+target_link_libraries(quickhull PUBLIC algebra)
+
+# Then, carefully add your include directories. All of your `target_include_directories` must look like this
+target_include_directories(quickhull PUBLIC
+  # include directory in your build tree
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  # include directory when installed
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+)
+
+
+###############################################################################
+# Install package
+###############################################################################
+# Install public include files
+install(DIRECTORY include/convex_decomposition
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} FILES_MATCHING PATTERN "*.hpp" PATTERN "*.h"
+)
+
+# We add `yourlibrary` target into the export set.
+# The export set will contain all targets to be imported by the other project.
+# It also installs the library to the install script so they are installed:
 set(convex_decomposition_libs quickhull)
-install(TARGETS ${convex_decomposition_libs}
-  LIBRARY DESTINATION lib
-  RUNTIME DESTINATION bin
-  ARCHIVE DESTINATION lib
+install(TARGETS ${convex_decomposition_libs} EXPORT RobotAlgoTargets
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )

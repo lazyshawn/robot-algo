@@ -1,5 +1,5 @@
 // geometry
-#include "algebra.h"
+#include "geometry/algebra.h"
 #include <iostream>
 
 int main(int argc, char** argv) {

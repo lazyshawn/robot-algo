@@ -1,6 +1,6 @@
 
-#include "nurbs.h"
-#include "user_interface.h"
+#include "path_planning/nurbs.h"
+#include "user_interface/user_interface.h"
 
 void sort_points_along_direction(std::vector<Eigen::Vector3d>& pointVector, Eigen::Vector3d direction);
 
