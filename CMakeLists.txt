@@ -20,10 +20,11 @@ if(WIN32)
   # Set the runtime lib for MSCV (global)
   set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 else()
-  # Set the installation directory
-  SET(CMAKE_INSTALL_PREFIX "${PROJECT_BINARY_DIR}/out/${PROJECT_NAME}-${CMAKE_BUILD_TYPE}")
   option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 endif()
+
+# Set the installation directory
+SET(CMAKE_INSTALL_PREFIX "${PROJECT_BINARY_DIR}/out/${PROJECT_NAME}-${CMAKE_BUILD_TYPE}")
 
 # include_directories(include)
 

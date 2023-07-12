@@ -317,8 +317,7 @@ std::vector<double> NURBS_Curve::least_squares_fitting(const std::vector<Eigen::
   return paraU;
 }
 
-double NURBS_Curve::auto_fitting(const std::vector<Eigen::Vector3d> &points,
-                                 const double &threshold) {
+double NURBS_Curve::auto_fitting(const std::vector<Eigen::Vector3d> &points, const double &threshold) {
   const size_t n = points.size();
   if (ctrlPoints.size() < n) {
     *this = NURBS_Curve(order, n);
@@ -327,7 +326,8 @@ double NURBS_Curve::auto_fitting(const std::vector<Eigen::Vector3d> &points,
 
   // 二分法查找精度小于阈值的方式
   std::pair<size_t, double> bestFit{n, std::numeric_limits<double>::infinity()};
-  for (int mid = order; mid < n + 1; ++mid) {
+  for (int mid = order; mid < 5; ++mid) {
+  // for (int mid = order; mid < n + 1; ++mid) {
     printf("mid = %d\n", mid);
     activeCtrlPoints = mid;
     // 设置节点向量

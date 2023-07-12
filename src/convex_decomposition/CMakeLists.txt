@@ -9,7 +9,7 @@ add_library(quickhull
 # )
 
 # Then, link libraries
-target_link_libraries(quickhull PUBLIC algebra)
+target_link_libraries(quickhull PUBLIC algebra geometry)
 
 # Then, carefully add your include directories. All of your `target_include_directories` must look like this
 target_include_directories(quickhull PUBLIC

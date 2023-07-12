@@ -7,6 +7,7 @@
 #include <map>
 
 #include "geometry/algebra.h"
+#include "geometry/geometry.h"
 
 namespace qkhull {
   class Vertex;

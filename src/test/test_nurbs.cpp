@@ -33,18 +33,20 @@ int main(int argc, char** argv) {
 
 void test_auto_fitting() {
   // 从文件读取拟合点
+  read_eigen_from_file("/home/shawn/Downloads/PC_file.txt", pntMat);
   // read_eigen_from_file("/home/shawn/Downloads/cluoutput.txt", pntMat);
-  // pntMat.transposeInPlace();
+  pntMat.transposeInPlace();
   // fitPnt = std::vector<Eigen::Vector3d>(pntMat.cols());
 
   // 随机生成拟合点
   std::cout << "Fitting points:" << std::endl;
+  fitPnt = std::vector<Eigen::Vector3d>(pntMat.cols());
   for (int i=0; i<pntMat.cols(); ++i) {
     fitPnt[i] = pntMat.col(i);
   }
 
   // 拟合点排序
-  sort_points_along_direction(fitPnt, Eigen::Vector3d({1,0,0}));
+  // sort_points_along_direction(fitPnt, Eigen::Vector3d({1,0,0}));
   std::cout << pntMat << "\n" << std::endl;
 
   curve.auto_fitting(fitPnt, 3);
