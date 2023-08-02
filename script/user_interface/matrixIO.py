@@ -1,6 +1,6 @@
 import numpy as np
 
-def read_data_from_txt(fname, **readFlag):
+def read_data_from_txt(fname: str, **readFlag):
     '''
     @brief: 从文本文件中读取数据，失败返回空 np.empty(0)
     @param: fname - 文件路径
