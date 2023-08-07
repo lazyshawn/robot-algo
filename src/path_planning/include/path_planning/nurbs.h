@@ -59,13 +59,15 @@ public:
 
   /* 
   * @brief : 将两个参数值之间的曲线离散化为弦长
-  * @param : begPara - 曲线起点的参数值
-  * @param : endPara - 曲线终点的参数值
-  * @param : numSegment - 一次离散过程中的区间数量
-  * @param : terminateCondition - 终止条件，当曲线长度变化量小于该值时停止迭代
-  * @return: nodePara - 离散化后节点的参数值
+  * @param : nodePara(out) - 离散化后节点的参数值
+  * @param : begPara - 曲线起点的参数值 - 0
+  * @param : endPara - 曲线终点的参数值 - 1
+  * @param : numSegment - 一次离散过程中的区间数量 - 10
+  * @param : terminateCondition - 终止条件，当曲线长度变化量小于该值时停止迭代 - 1e-2
+  * @param : segmentLen - 离散弦长的阈值 - -1
   */
-  void discrete_arc_length(std::vector<double>& nodePara, double begPara, double endPara, int numSegment = 10, double terminateCondition = 1e-2) const;
+  void discrete_arc_length(std::vector<double> &nodePara, double begPara, double endPara, double terminateCondition = 1e-2,
+                           double segmentLen = -1, size_t numSegment = 10) const;
 
   /* 
   * @brief : 根据离散的节点计算曲线上的弦长之和
@@ -77,14 +79,14 @@ public:
 
   /* 
   * @brief : 按照给定的曲线长度获取均匀采样点
-  * @param : samplePara - 离散化后节点的参数向量
+  * @param : discretePara - 离散化后的节点参数向量
   * @param : cumuChordLength - 离散化后累加到节点处的弦长之和
   * @param : length - 每段曲线的长度
   * @param : threshold - (unused)
   * @return: 采样后节点对应的参数向量
   */
   std::vector<double> get_uniform_sample(double length, double threshold = 1e-1);
-  std::vector<double> get_uniform_sample(const std::vector<double>& samplePara, const std::vector<double>& cumuChordLength,
+  std::vector<double> get_uniform_sample(const std::vector<double>& discretePara, const std::vector<double>& cumuChordLength,
                                          double length, double threshold = 1e-1) const;
 
   /* 

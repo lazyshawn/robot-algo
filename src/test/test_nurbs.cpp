@@ -23,23 +23,31 @@ Eigen::MatrixXd pntMat = get_random_matrix(3, numPnts, 0, 10);
 std::vector<Eigen::Vector3d> fitPnt(numPnts);
 
 int main(int argc, char** argv) {
-  test_curve();
+  // test_curve();
   // test_surface();
   // test_fitting();
-  // test_auto_fitting();
+  test_auto_fitting();
+
+  // 记录控制点
+  record_ctrl_points();
+  // 记录拟合点
+  record_fitting_points();
+  // 记录生成曲线
+  record_curve();
 
   return 0;
 }
 
 void test_auto_fitting() {
-  // 从文件读取拟合点
-  read_eigen_from_file("/home/shawn/Downloads/PC_file.txt", pntMat);
-  // read_eigen_from_file("/home/shawn/Downloads/cluoutput.txt", pntMat);
+  // 从文件读取拟合点数据
+  read_eigen_from_file("data/cluster.txt", pntMat);
   pntMat.transposeInPlace();
   // fitPnt = std::vector<Eigen::Vector3d>(pntMat.cols());
 
-  // 随机生成拟合点
   std::cout << "Fitting points:" << std::endl;
+  std::cout << pntMat << "\n" << std::endl;
+
+  // 以向量格式保存拟合点
   fitPnt = std::vector<Eigen::Vector3d>(pntMat.cols());
   for (int i=0; i<pntMat.cols(); ++i) {
     fitPnt[i] = pntMat.col(i);
@@ -47,20 +55,17 @@ void test_auto_fitting() {
 
   // 拟合点排序
   // sort_points_along_direction(fitPnt, Eigen::Vector3d({1,0,0}));
-  std::cout << pntMat << "\n" << std::endl;
 
+  // 最小二乘拟合
   curve.auto_fitting(fitPnt, 3);
+  
+  // 均匀采样
+  std::vector<double> samplePara = curve.get_uniform_sample(1);
+  std::cout << "num of sample points: " << samplePara.size() << std::endl;
 
   std::cout << "\n===> Get points on curve:" << std::endl;
   Eigen::Vector3d point = curve.get_point(0.5);
   std::cout << point << std::endl;
-
-  // 记录控制点
-  record_ctrl_points();
-  // 记录拟合点
-  record_fitting_points();
-  // 记录生成曲线
-  record_curve(numPnts * 5);
 }
 
 void test_fitting() {
@@ -82,13 +87,6 @@ void test_fitting() {
   std::cout << "\n===> Get points on curve:" << std::endl;
   Eigen::Vector3d point = curve.get_point(0.5);
   std::cout << point << std::endl;
-
-  // 记录控制点
-  record_ctrl_points();
-  // 记录拟合点
-  record_fitting_points();
-  // 记录生成曲线
-  record_curve();
 }
 
 void test_surface() {
@@ -181,11 +179,6 @@ void test_curve() {
   std::cout << "\nlength = " << curve.get_chord_length(paraVec, cumuChordLength) << std::endl;
   std::cout << "time = " << timer.ms_since_last() << std::endl;;
   std::vector<double> samplePara = curve.get_uniform_sample(paraVec, cumuChordLength, 10);
-
-  // 记录控制点
-  record_ctrl_points();
-  // 记录生成曲线
-  record_curve(numPnts * 10);
 }
 
 void sort_points_along_direction(std::vector<Eigen::Vector3d>& pointVector, Eigen::Vector3d direction) {
