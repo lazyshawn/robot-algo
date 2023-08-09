@@ -61,6 +61,14 @@ target_link_libraries(test_probabilistic_roadmap PUBLIC
   user_interface
 )
 
+add_executable(test_transform
+  test_transform.cpp
+)
+target_link_libraries(test_transform PUBLIC
+  user_interface
+  transformation
+)
+
 set(test_bins
   # test_gjk
   # test_qkhull
