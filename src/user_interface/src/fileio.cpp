@@ -38,3 +38,23 @@ void read_eigen_from_file(const std::string &fname, Eigen::MatrixXd& mat, int ro
   mat = std::move(Eigen::Map<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>(values.data(),dataRows,dataCols));
 }
 
+std::optional<nlohmann::json> get_json_field(nlohmann::json data, std::string field, size_t numItem) {
+  if(data.find(field) == data.end()) {
+    // 字段不存在
+    std::cout << "Error: field [" << field << "] does not exist." << std::endl;
+    return std::nullopt;
+  } else if (numItem > 0) {
+    // 需要检查元素个数
+    size_t num = data[field].size();
+    if(num < numItem) {
+      // 元素个数过少
+      std::cout << "Error: field [" << field << "] require " << numItem << ", but got " << num << std::endl;
+      return std::nullopt;
+    } else if(num > numItem) {
+      // 元素个数过多
+      std::cout << "Warnning: field [" << field << "] require " << numItem << ", but got " << num << std::endl;
+    }
+  }
+  return std::make_optional(data[field]);
+}
+

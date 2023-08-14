@@ -49,6 +49,45 @@ def set_ax_equal(ax):
     ax.set_xlim3d([x_middle - plot_radius, x_middle + plot_radius])
     ax.set_ylim3d([y_middle - plot_radius, y_middle + plot_radius])
     ax.set_zlim3d([z_middle - plot_radius, z_middle + plot_radius])
+    # Ref: https://stackoverflow.com/a/73749399
+    ax.set_aspect('equal')
+
+
+def plotCoordinate(ax, coord = [[1,0,0],[0,1,0],[0,0,1]], len = 1, origin = [0,0,0]):
+    '''
+    @brief: 绘制坐标轴
+    @param: ax - 绘图坐标轴
+    @param: coord - 需要绘制的坐标轴矩阵
+    @param: len - 绘制的坐标轴长度
+    @param: origin - 原点坐标
+    '''
+    # 原点坐标
+    origin = np.array(origin, dtype=float)
+    # 坐标轴长度
+    len = float(len)
+    # 坐标轴矩阵
+    coord = np.array(coord, dtype=float)
+    # 坐标轴方向
+    xdir = np.array([coord[0,0], coord[1,0], coord[2,0]], dtype = float)
+    ydir = np.array([coord[0,1], coord[1,1], coord[2,1]], dtype = float)
+    zdir = np.array([coord[0,2], coord[1,2], coord[2,2]], dtype = float)
+    # 单位化
+    xdir, ydir, zdir = xdir/np.linalg.norm(xdir)*len, ydir/np.linalg.norm(ydir)*len, zdir/np.linalg.norm(zdir)*len
+
+    # 坐标轴终点
+    x = np.array([origin[i]+xdir[i] for i in range(3)])
+    y = np.array([origin[i]+ydir[i] for i in range(3)])
+    z = np.array([origin[i]+zdir[i] for i in range(3)])
+    ax.scatter(*[[x[i],y[i],z[i]] for i in range(3)], s=0)
+    ax.scatter(*[origin[i] for i in range(3)])
+
+    # 绘制坐标轴
+    xAxis = Arrow3D([origin[0], x[0]], [origin[1], x[1]], [origin[2], x[2]], mutation_scale=20, lw=1, arrowstyle="-|>", color="r")
+    ax.add_artist(xAxis)
+    yAxis = Arrow3D([origin[0], y[0]], [origin[1], y[1]], [origin[2], y[2]], mutation_scale=20, lw=1, arrowstyle="-|>", color="g")
+    ax.add_artist(yAxis)
+    zAxis = Arrow3D([origin[0], z[0]], [origin[1], z[1]], [origin[2], z[2]], mutation_scale=20, lw=1, arrowstyle="-|>", color="b")
+    ax.add_artist(zAxis)
 
 
 def plot_mesh_from_off(fname, ax):

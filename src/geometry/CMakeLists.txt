@@ -62,15 +62,15 @@ target_include_directories(geometry PUBLIC
 )
 
 ###############################################################################
-add_library(transformation
-  src/transformation.cpp
+add_library(transform
+  src/transform.cpp
 )
 
 # Then, link libraries
-# target_link_libraries(geometry PUBLIC algebra)
+target_link_libraries(transform PUBLIC algebra)
 
 # Then, carefully add your include directories. All of your `target_include_directories` must look like this
-target_include_directories(transformation PUBLIC
+target_include_directories(transform PUBLIC
   # include directory in your build tree
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   # include directory when installed
@@ -95,7 +95,7 @@ set(geometry_libs
   algebra
   kd_tree
   geometry
-  transformation
+  transform
 )
 install(TARGETS ${geometry_libs} EXPORT RobotAlgoTargets
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}

@@ -66,8 +66,17 @@ add_executable(test_transform
 )
 target_link_libraries(test_transform PUBLIC
   user_interface
-  transformation
+  transform
 )
+
+add_executable(robot_prototype_robot_base
+  robot_prototype_robot_base.cpp
+)
+target_link_libraries(robot_prototype_robot_base PUBLIC
+  robot_prototype
+  user_interface
+)
+
 
 set(test_bins
   # test_gjk

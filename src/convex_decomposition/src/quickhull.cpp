@@ -177,7 +177,8 @@ void qkhull::initTetrahedron(VertexList& vertexList, FaceList& tetrahedron) {
   }
 
   Eigen::Vector3d dir = (*iteVtx[1])->point - (*iteVtx[0])->point;
-  Eigen::Vector3d tmpPoint{dir[2],dir[0],dir[1]};
+  // 与 dir 不共面的任意向量，包含 dir 的一组基底的三个基向量之和
+  Eigen::Vector3d tmpPoint{dir[0]-dir[1]-dir[2], dir[0]+dir[1], dir[0]+dir[2]};
   Eigen::Vector3d norm = dir.cross(tmpPoint), orth = dir.cross(norm);
   Eigen::MatrixXd projMat(3,2);
   projMat << norm, orth;
