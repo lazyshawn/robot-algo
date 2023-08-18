@@ -51,6 +51,14 @@ std::optional<Eigen::Vector<double,6>> SE3toTwist(Eigen::Isometry3d tran);
 Eigen::Vector3d get_point_on_twist(Eigen::Vector<double,6> twist);
 
 /* 
+* @brief : 求相交的螺旋轴的交点
+* @param : twist - 若干相交的螺旋轴组成的向量
+* @return: 螺旋轴的交点
+* @ref   : https://en.wikipedia.org/wiki/Line%E2%80%93line_intersection
+*/
+Eigen::Vector3d get_twist_intersection(std::vector<Eigen::Vector<double,6>> twist);
+
+/* 
 * @brief : Paden-Kahan subproblems
 * @param : tran - 齐次转换矩阵
 * @return: 齐次转换矩阵对应的运动旋量

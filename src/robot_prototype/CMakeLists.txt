@@ -1,6 +1,7 @@
 # robot_prototype_lib
 add_library(robot_prototype
   src/robot_base.cpp
+  src/kinematics.cpp
 )
 
 # set_target_properties(user_interface PROPERTIES

@@ -57,33 +57,11 @@ Eigen::Vector3d get_point_on_twist(Eigen::Vector<double,6> twist) {
   return squareTheta == 0 ? Eigen::Vector3d({0,0,0}) : w.cross(v) / squareTheta;
 }
 
-std::optional<double> pk_subproblem_1(Eigen::Vector<double,6> twist, Eigen::Vector3d p, Eigen::Vector3d q) {
-  // 螺旋轴上一点 r
-  Eigen::Vector3d r = get_point_on_twist(twist);
-  // 螺旋轴方向向量
-  Eigen::Vector3d w = twist.tail(3);
-  w.normalize();
-  // 从点 r 到点 p, q 的向量
-  Eigen::Vector3d u = p-r, v = q-r;
-  // u, v 在垂直于螺旋轴的平面上的投影
-  Eigen::Vector3d up = u - w*w.transpose()*u, vp = v - w*w.transpose()*v;
-
-  // 解的存在性条件
-  if (w.dot(u) != w.dot(v) || std::fabs(up.squaredNorm() - vp.squaredNorm()) > 1e-9) {
-    return std::nullopt;
-  }
-  return atan2(w.dot(up.cross(vp)),up.dot(vp));
-}
-
-std::optional<std::vector<std::vector<double>>> pk_subproblem_2(Eigen::Vector<double,6> twist1, Eigen::Vector<double,6> twist2, Eigen::Vector3d p, Eigen::Vector3d q) {
-// Eigen::MatrixXd pk_subproblem_2(Eigen::Vector<double,6> twist1, Eigen::Vector<double,6> twist2, Eigen::Vector3d p, Eigen::Vector3d q) {
-  std::vector<Eigen::Vector<double,6>> twist({twist1, twist2});
-  std::vector<Eigen::Vector3d> w({twist1.tail(3), twist2.tail(3)});
-
-  // * 获取两螺旋轴的交点: https://en.wikipedia.org/wiki/Line%E2%80%93line_intersection
-  Eigen::MatrixXd A(4,3);
-  Eigen::Vector4d b;
-  for (size_t i=0; i<2; ++i) {
+Eigen::Vector3d get_twist_intersection(std::vector<Eigen::Vector<double,6>> twist) {
+  const int numTwist = twist.size();
+  Eigen::MatrixXd A(2*numTwist,3);
+  Eigen::VectorXd b(2*numTwist);
+  for (size_t i=0; i<numTwist; ++i) {
     // 螺旋轴方向向量
     Eigen::Vector3d w = twist[i].tail(3);
     // 获取补子空间基底
@@ -99,7 +77,34 @@ std::optional<std::vector<std::vector<double>>> pk_subproblem_2(Eigen::Vector<do
     b[2*i+1] = w2.dot(ri);
   }
   // 两螺旋轴的交点 r
-  Eigen::Vector3d r = (A.transpose()*A).inverse()*A.transpose()*b;
+  // Eigen::Vector3d r = (A.transpose()*A).inverse()*A.transpose()*b;
+  return (A.transpose()*A).inverse()*A.transpose()*b;
+}
+
+std::optional<double> pk_subproblem_1(Eigen::Vector<double,6> twist, Eigen::Vector3d p, Eigen::Vector3d q) {
+  // 螺旋轴上一点 r
+  Eigen::Vector3d r = get_point_on_twist(twist);
+  // 螺旋轴方向向量
+  Eigen::Vector3d w = twist.tail(3);
+  w.normalize();
+  // 从点 r 到点 p, q 的向量
+  Eigen::Vector3d u = p-r, v = q-r;
+  // u, v 在垂直于螺旋轴的平面上的投影
+  Eigen::Vector3d up = u - w*w.transpose()*u, vp = v - w*w.transpose()*v;
+
+  // 解的存在性条件
+  if (std::fabs(w.dot(u) - w.dot(v)) > 1e-9 || std::fabs(up.norm() - vp.norm()) > 1e-9) {
+    printf("Error! # pk_subproblem_1(): %f, %f. ", std::fabs(w.dot(u) - w.dot(v)), std::fabs(up.squaredNorm() - vp.squaredNorm()));
+    return std::nullopt;
+  }
+  return atan2(w.dot(up.cross(vp)),up.dot(vp));
+}
+
+std::optional<std::vector<std::vector<double>>> pk_subproblem_2(Eigen::Vector<double,6> twist1, Eigen::Vector<double,6> twist2, Eigen::Vector3d p, Eigen::Vector3d q) {
+  std::vector<Eigen::Vector<double,6>> twist({twist1, twist2});
+  std::vector<Eigen::Vector3d> w({twist1.tail(3), twist2.tail(3)});
+  // 两螺旋轴的交点 r
+  Eigen::Vector3d r = get_twist_intersection({twist1,twist2});
 
   // * 求解 pk 问题
   // 从点 r 到点 p, q 的向量
@@ -110,7 +115,7 @@ std::optional<std::vector<std::vector<double>>> pk_subproblem_2(Eigen::Vector<do
   // 解的存在性条件
   size_t numSol = 0;
   if (squaredGama < 0) {
-    printf("Error: gama < 0\n");
+    printf("Error! # pk_subproblem_2(): gama < 0. ");
     return std::nullopt;
   } else if (squaredGama < 1e-9) {
     // 一组解
@@ -124,20 +129,20 @@ std::optional<std::vector<std::vector<double>>> pk_subproblem_2(Eigen::Vector<do
   double gama = sqrt(squaredGama);
   std::vector<Eigen::Vector3d> z(2);
   z[0] = alpha*w[0] + beta*w[1] + gama*(w[0].cross(w[1]));
-  z[1] = alpha*w[0] + beta*w[1] - gama*(w[0].cross(w[1]));
+  z[1] = z[0] - 2*gama*(w[0].cross(w[1]));
 
   std::vector<std::vector<double>> ret;
   for (size_t i=0; i<numSol; ++i) {
     std::vector<double> theta(2,0);
     // std::cout << "c = " << (z[i] + r).transpose() << std::endl;
     if (auto opt = pk_subproblem_1(twist[1], p, z[i] + r); !opt) {
-      printf("no pk_1, p -> c\n");
+      printf("# pk_subproblem_2(): no pk_1, p -> c. ");
       return std::nullopt;
     } else {
       theta[1] = opt.value();
     }
     if (auto opt = pk_subproblem_1(twist[0], q, z[i] + r); !opt) {
-      printf("no pk_1, q -> c\n");
+      printf("# pk_subproblem_2(): no pk_1, p -> c. ");
       return std::nullopt;
     } else {
       theta[0] = -1 * opt.value();

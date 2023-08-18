@@ -1,9 +1,9 @@
 #pragma once
 
+#include "robot_prototype/kinematics.h"
 #include "user_interface/user_interface.h"
-#include "geometry/transform.h"
 
-class robotBase {
+class RobotBase {
 public:
   // 机械臂别名
   std::string robotName;
@@ -12,15 +12,15 @@ public:
   // 关节轴(twist)
   std::vector<Eigen::Vector<double,6>> jointAxis;
   // 关节角限位
-  std::vector<double> jointLimit;
+  std::vector<std::vector<double>> jointLimit;
   // 执行器的零位位姿
-  // Eigen::Isometry3d M0;
   std::vector<Eigen::Isometry3d> M0;
   // IP
   std::string ip;
   // 端口
   size_t port;
-  bool j2j3Couple = false;
+  // 关节耦合标志: 上游关节的运动会累加到下游关节
+  bool jointCouple = false;
 
 public:
   /* 
@@ -35,15 +35,16 @@ public:
   * @param : eeIdx - 末端执行器序号
   * @return: 末端执行器位姿信息
   */
-  Eigen::Isometry3d forward_kinematics(std::vector<double> theta, size_t eeIdx = 0) const;
+  Eigen::Isometry3d solve_forward_kinematics(std::vector<double> theta, size_t eeIdx = 0) const;
   /* 
   * @brief : 肘形机械臂逆运动学 - Inverse kinematics of elbow manipulator
   * @param : theta (rad) - 关节角
   * @param : eeIdx - 末端执行器序号
   * @return: 末端执行器位姿信息
   */
-  std::vector<std::vector<double>> inverse_kinematics(Eigen::Isometry3d tran, size_t eeIdx = 0) const;
+  virtual std::optional<std::vector<std::vector<double>>> solve_inverse_kinematics(Eigen::Isometry3d pose, size_t eeIdx = 0) const;
 
+  // 驱动中添加机械臂控制程序
   // virtual void read_robot_status(std::vector<double>& theta);
   // virtual void send_robot_cmd(const std::vector<double> theta);
 };

@@ -1,16 +1,43 @@
 #include "robot_prototype/robot_base.h"
 
-bool robotBase::load_config(std::string fname) {
+bool RobotBase::load_config(std::string fname) {
   // * 读取配置文件
-  nlohmann::json config = nlohmann::json::parse(std::ifstream(fname));
+  nlohmann::json config;
+  try {
+    config = nlohmann::json::parse(std::ifstream(fname));
+  } catch (...) {
+    printf("Error! # load_json(): parse failed. ");
+    return false;
+  }
+
+  // 检查需要的字段
+  std::vector<std::string> requiredField({"sdf", "sd", "sds"});
+  for (auto field : requiredField) {
+    if (!config.contains(field)) {
+      printf("Error! # loadjson(): no required field \"%s\". ", field.c_str());
+      return false;
+    }
+  }
 
   // 读取机械臂型号，非必要
   if (auto j = get_json_field(config, "robot_brand"); j) {
     robotName = j->get<std::string>();
   }
 
-  // 关节 2, 3 耦合
-  j2j3Couple = config["j2_j3_coupling"].get<bool>();
+  // 激活的关节数
+  numJoint = config["num_of_joint"].get<size_t>();
+
+  // 关节 2, 3 耦合: 关节 2 的运动会增加到关节 3
+  jointCouple = config["j2_j3_coupling"].get<bool>();
+
+  // 关节限位信息
+  std::vector<double> upperJoint = config["joint_limits"]["positions"]["uppers"].get<std::vector<double>>();
+  std::vector<double> lowerJoint = config["joint_limits"]["positions"]["lowers"].get<std::vector<double>>();
+  jointLimit = std::vector<std::vector<double>>(numJoint);
+  for (size_t i=0; i<numJoint; ++i) {
+    jointLimit[i] = {lowerJoint[i], upperJoint[i]};
+  }
+
   // * 读取 TCP 位姿
   if (auto cfg = get_json_field(config, "end-effector"); cfg) {
     Eigen::Isometry3d m0;
@@ -53,19 +80,33 @@ bool robotBase::load_config(std::string fname) {
   return true;
 }
 
-Eigen::Isometry3d robotBase::forward_kinematics(std::vector<double> theta, size_t eeIdx) const {
+Eigen::Isometry3d RobotBase::solve_forward_kinematics(std::vector<double> theta, size_t eeIdx) const {
   // 处理耦合情况
-  if (j2j3Couple) {theta[2] += theta[1];}
-  Eigen::Isometry3d tran = M0[eeIdx];
-  for (size_t i=0; i<numJoint; ++i) {
-    int idx = numJoint - i - 1;
-    tran = lieSE3(jointAxis[idx] * theta[idx]) * tran;
-  }
-  return tran;
+  if (jointCouple) {theta[2] += theta[1];}
+  return forward_kinematics(jointAxis, theta, M0[eeIdx]);
 }
 
-std::vector<std::vector<double>> robotBase::inverse_kinematics(Eigen::Isometry3d tran, size_t eeIdx) const {
-  // 肘关节点， 腕关节点
-  Eigen::Vector3d pb, bw;
+std::optional<std::vector<std::vector<double>>> RobotBase::solve_inverse_kinematics(Eigen::Isometry3d pose, size_t eeIdx) const {
+  const double pi = 3.1415926535897932384626433832795028841971693993751058209;
+  std::vector<std::vector<double>> ret;
+  // 解析逆解
+  if (auto opt = inverse_kinematics_elbow(jointAxis, pose, M0[eeIdx]); opt) {
+    ret = opt.value();
+  } else {
+    // 当解析解误差过大时使用数值逆解
+  }
 
+  // 处理耦合情况
+  if (jointCouple) {
+    for (size_t i=0; i<ret.size(); ++i) {
+      ret[i][2] -= ret[i][1];
+    }
+  }
+
+  // 检验关节角是否超出限位区间
+  for (size_t i=0; i<ret.size(); ++i) {
+    wrap_joint(ret[i], jointLimit);
+  }
+
+  return ret;
 }
