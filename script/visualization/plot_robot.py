@@ -24,11 +24,15 @@ class Robot():
         '''
         :Brief: 默认构造
         '''
+        # 连杆点云数据
         self.linkPoint = linkPoint
+        # 连杆偏移量 / 连杆参考点坐标
         self.linkOffset = linkOffset
+        # 关节轴
         self.jointAxis = jointAxis
         self.numLink = len(linkOffset)
         self.numJoint = len(jointAxis)
+        # 计算初始连杆的位姿
         self.update_link_pose()
         return
 
@@ -36,6 +40,7 @@ class Robot():
     def load_from_file(cls, robotDir):
         '''
         :Brief: 从机械臂文件夹读取点云和配置文件
+        :@robotDir: 机器人配置文件夹，包括配置文件、碰撞体文件
         '''
         # 读取机械臂配置文件
         with open(robotDir+"/config.json") as file:
@@ -61,7 +66,7 @@ class Robot():
         linkPoint = []
         for i in range(numLink):
             fname = robotDir+"/link_" + str(i) + ".ply"
-            data = np.loadtxt(fname, skiprows=8).transpose()
+            data = np.loadtxt(fname, skiprows=8).transpose() * 1000
             linkPoint.append(data)
 
         return cls(linkPoint, linkOffset, jointAxis)
@@ -71,15 +76,19 @@ class Robot():
         :Brief: 根据关节角更新连杆位姿
         '''
         self.linkPose = [np.eye(4,4) for i in range(self.numLink)]
-        if (len(theta) == 0): theta = [0 for i in range(self.numJoint)]
+        # 默认关节角
+        if (len(theta) == 0):
+            theta = [0 for i in range(self.numJoint)]
+        # 连杆初始位姿
+        for i in range(self.numLink):
+            self.linkPose[i][0:3,0:3] = np.eye(3,3)
+            self.linkPose[i][0:3,3] = self.linkOffset[i].reshape(1,3)
 
-        position = np.mat([[0],[0],[0]])
-        for i in range(1,self.numLink):
-            rotMat = axis_angle_to_rotation(self.jointAxis[i-1], theta[i-1])
-            orient = self.linkPose[i-1][0:3,0:3] * rotMat
-            position = position + np.matmul(self.linkPose[i-1][0:3,0:3], self.linkOffset[i])
-            self.linkPose[i][0:3,0:3] = orient
-            self.linkPose[i][0:3,3] = position.reshape(1,3)
+        # 第 i 个关节的运动对各个连杆产生的变换
+        rotMat = np.eye(3,3)
+        for i in range(self.numJoint):
+            rotMat = axis_angle_to_rotation(self.jointAxis[i], theta[i]) * rotMat
+            self.linkPose[i+1][0:3,0:3] = rotMat
 
     def plot(self, ax):
         handle = []
@@ -87,6 +96,10 @@ class Robot():
             point = self.linkPoint[i]
             point = np.matmul(self.linkPose[i][0:3,0:3], point) + self.linkPose[i][0:3,3].reshape(3,1)
             handle.append(ax.scatter(*[point[coord,:] for coord in range(3)], s=2, label="link_"+str(i)))
+        # 基坐标系
+        coordLen = 1000
+        plotUtils.plotCoordinate(ax, self.linkPose[0][0:3,0:3], coordLen, self.linkPose[0][0:3,3])
+        plotUtils.plotCoordinate(ax, self.linkPose[self.numLink-1][0:3,0:3], coordLen, self.linkPose[self.numJoint][0:3,3])
         return handle
 
 
@@ -98,7 +111,7 @@ if __name__ == "__main__":
     colorMap = plt.get_cmap("tab10")
 
     robot = Robot.load_from_file("data/r2700")
-    robot.update_link_pose([math.pi/3,0,0,0,math.pi/2,0,0])
+    robot.update_link_pose([0,0,0,0,0,math.pi/2])
     handle = robot.plot(ax)
 
     plotUtils.set_ax_equal(ax)
