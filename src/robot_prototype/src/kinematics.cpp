@@ -1,14 +1,22 @@
 #include "robot_prototype/kinematics.h"
 
-Eigen::Isometry3d forward_kinematics(const std::vector<Eigen::Vector<double,6>>& jointAxis, const std::vector<double>& theta, Eigen::Isometry3d M0) {
-  // 零位 TCP 位姿
-  Eigen::Isometry3d tran = M0;
-  // 空间运动旋量从末端关节往前计算
-  for (size_t i=0; i<jointAxis.size(); ++i) {
-    int idx = jointAxis.size() - i - 1;
+Eigen::Isometry3d serial_transfrom(const std::vector<Eigen::Vector<double, 6>>& jointAxis, const std::vector<double>& theta, size_t begIdx, size_t endIdx) {
+  // 将默认终止序号设为最后一个关节轴序号
+  endIdx = endIdx==-1 ? jointAxis.size()-1 : endIdx;
+
+  Eigen::Isometry3d tran = Eigen::Isometry3d::Identity();
+  // 计算空间正运动学
+  size_t num = endIdx - begIdx + 1;
+  for (size_t i=0; i<num; ++i) {
+    int idx = endIdx - i;
     tran = lieSE3(jointAxis[idx] * theta[idx]) * tran;
   }
+
   return tran;
+}
+
+Eigen::Isometry3d forward_kinematics(const std::vector<Eigen::Vector<double,6>>& jointAxis, const std::vector<double>& theta, Eigen::Isometry3d M0) {
+  return serial_transfrom(jointAxis, theta)*M0;
 }
 
 std::optional<std::vector<std::vector<double>>>

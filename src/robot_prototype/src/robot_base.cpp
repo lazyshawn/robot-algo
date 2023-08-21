@@ -11,13 +11,13 @@ bool RobotBase::load_config(std::string fname) {
   }
 
   // 检查需要的字段
-  std::vector<std::string> requiredField({"sdf", "sd", "sds"});
-  for (auto field : requiredField) {
-    if (!config.contains(field)) {
-      printf("Error! # loadjson(): no required field \"%s\". ", field.c_str());
-      return false;
-    }
-  }
+  // std::vector<std::string> requiredField({"sdf", "sd", "sds"});
+  // for (auto field : requiredField) {
+  //   if (!config.contains(field)) {
+  //     printf("Error! # loadjson(): no required field \"%s\". ", field.c_str());
+  //     return false;
+  //   }
+  // }
 
   // 读取机械臂型号，非必要
   if (auto j = get_json_field(config, "robot_brand"); j) {

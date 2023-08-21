@@ -3,6 +3,16 @@
 #include "geometry/transform.h"
 
 /* 
+* @brief : 顺序旋转的齐次转换矩阵
+* @param : jointAxis - 关节螺旋轴
+* @param : theta (rad) - 关节角
+* @param : begIdx - 起始螺旋轴的索引
+* @param : endIdx - 终止螺旋轴的索引
+* @return: 齐次转换矩阵
+*/
+Eigen::Isometry3d serial_transfrom(const std::vector<Eigen::Vector<double, 6>>& jointAxis, const std::vector<double>& theta, size_t begIdx = 0, size_t endIdx = -1);
+
+/* 
 * @brief : 求解正运动学
 * @param : jointAxis - 关节螺旋轴
 * @param : theta (rad) - 关节角
