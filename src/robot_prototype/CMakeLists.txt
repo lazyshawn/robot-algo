@@ -1,6 +1,7 @@
-# convex_decomposition_lib
-add_library(quickhull
-  src/quickhull.cpp
+# robot_prototype_lib
+add_library(robot_prototype
+  src/robot_base.cpp
+  src/kinematics.cpp
 )
 
 # set_target_properties(user_interface PROPERTIES
@@ -9,30 +10,31 @@ add_library(quickhull
 # )
 
 # Then, link libraries
-target_link_libraries(quickhull PUBLIC algebra geometry)
+target_link_libraries(robot_prototype
+  PUBLIC user_interface transform
+)
 
 # Then, carefully add your include directories. All of your `target_include_directories` must look like this
-target_include_directories(quickhull PUBLIC
+target_include_directories(robot_prototype PUBLIC
   # include directory in your build tree
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   # include directory when installed
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
-
 ###############################################################################
 # Install package
 ###############################################################################
 # Install public include files
-install(DIRECTORY include/convex_decomposition
+install(DIRECTORY include/robot_prototype
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} FILES_MATCHING PATTERN "*.hpp" PATTERN "*.h"
 )
 
 # We add `yourlibrary` target into the export set.
 # The export set will contain all targets to be imported by the other project.
 # It also installs the library to the install script so they are installed:
-set(convex_decomposition_libs quickhull)
-install(TARGETS ${convex_decomposition_libs} EXPORT RobotAlgoTargets
+set(robot_prototype_libs robot_prototype)
+install(TARGETS ${robot_prototype_libs} EXPORT RobotAlgoTargets
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}

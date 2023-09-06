@@ -20,6 +20,13 @@ double dist2plane(Eigen::Vector3d target, Eigen::Vector3d norm, Eigen::Vector3d 
 void sort_along_direction(std::vector<Eigen::Vector3d>& points, Eigen::Vector3d direction);
 
 /* 
+* @brief : 用给定向量构造正交基底
+* @param : vec - 三维空间中一个向量
+* @return: 
+*/
+Eigen::Matrix3d construct_unit_orthogonal_basis(Eigen::Vector3d vec);
+
+/* 
 * @brief : 主成分分析
 * @param : points - n 个数据点坐标
 * @param : axis - 主轴方向

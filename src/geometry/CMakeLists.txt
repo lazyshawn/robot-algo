@@ -40,12 +40,51 @@ target_include_directories(kd_tree PUBLIC
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
+###############################################################################
+add_library(geometry
+  src/geometry.cpp
+)
+
+# set_target_properties(user_interface PROPERTIES
+#   INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/include"
+#   LINK_DIRECTORIES "${CMAKE_SOURCE_DIR}/lib"
+# )
+
+# Then, link libraries
+# target_link_libraries(geometry PUBLIC algebra)
+
+# Then, carefully add your include directories. All of your `target_include_directories` must look like this
+target_include_directories(geometry PUBLIC
+  # include directory in your build tree
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  # include directory when installed
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+)
+
+###############################################################################
+add_library(transform
+  src/transform.cpp
+)
+
+# Then, link libraries
+target_link_libraries(transform PUBLIC algebra)
+
+# Then, carefully add your include directories. All of your `target_include_directories` must look like this
+target_include_directories(transform PUBLIC
+  # include directory in your build tree
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  # include directory when installed
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+)
+
+
+
 
 ###############################################################################
 # Install package
 ###############################################################################
 # Install public include files
-install(DIRECTORY include/user_interface
+install(DIRECTORY include/geometry
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} FILES_MATCHING PATTERN "*.hpp" PATTERN "*.h"
 )
 
@@ -55,6 +94,8 @@ install(DIRECTORY include/user_interface
 set(geometry_libs
   algebra
   kd_tree
+  geometry
+  transform
 )
 install(TARGETS ${geometry_libs} EXPORT RobotAlgoTargets
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}

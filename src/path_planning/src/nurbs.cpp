@@ -135,7 +135,8 @@ Eigen::Vector3d NURBS_Curve::get_point(double u) const {
   return point / sum;
 }
 
-void NURBS_Curve::discrete_arc_length(std::vector<double>& paraVector, double begPara, double endPara, int numSegment, double terminateCondition) const {
+void NURBS_Curve::discrete_arc_length(std::vector<double> &paraVector, double begPara, double endPara, double terminateCondition,
+                                      double segmentLen, size_t numSegment) const {
   // 初始化节点列表
   std::list<double> paraList = std::list<double>({begPara, endPara});
   // 初始化访问队列
@@ -153,9 +154,11 @@ void NURBS_Curve::discrete_arc_length(std::vector<double>& paraVector, double be
 
     // * 离散化
     double intervalLen = (end - beg) / numSegment;
+    // 离散后的弦长之和
     double newChordLength = 0.0;
-    // 自区间内的最大弦长
+    // 子区间内的最大弦长
     double maxSubChordLength = 0.0;
+    // 循环变量初始化
     end = beg;
     for (size_t i=0; i<numSegment; ++i) {
       beg = end;
@@ -169,9 +172,9 @@ void NURBS_Curve::discrete_arc_length(std::vector<double>& paraVector, double be
 
     // * 更新区间节点
     // 参数区间内曲线长度因细分新增的变化量 (绝对/相对)
-    double deltaLength = (newChordLength - rawChordLength)/rawChordLength;
-    // double deltaLength = newChordLength - rawChordLength;
-    if (deltaLength > terminateCondition) {
+    double absDeltaLength = newChordLength - rawChordLength;
+    double relDeltaLength = absDeltaLength / rawChordLength;
+    if ((relDeltaLength > terminateCondition) || (segmentLen > 0 && (maxSubChordLength > segmentLen))) {
       std::list<double>::iterator tmpIte = ite;
       // 重新将区间起点加入访问队列
       iteQueue.push(tmpIte);
@@ -217,8 +220,8 @@ double NURBS_Curve::get_chord_length(const std::vector<double>& nodePara, std::v
   return length;
 }
 
-std::vector<double> NURBS_Curve::get_uniform_sample(
-    const std::vector<double>& samplePara, const std::vector<double>& cumuChordLength, double length, double threshold) const{
+std::vector<double> NURBS_Curve::get_uniform_sample(const std::vector<double>& discretePara, const std::vector<double>& cumuChordLength,
+                                                    double length, double threshold) const{
   // 采样点对应的参数值
   std::vector<double> uniformParaVector;
 
@@ -227,9 +230,9 @@ std::vector<double> NURBS_Curve::get_uniform_sample(
   // 分段长度
   double detLen = curveLength / numSegment, curChordLength = 0.0;
   size_t curSegmentIdx = 0;
-  for (size_t i = 0; i < samplePara.size(); ++i) {
+  for (size_t i = 0; i < discretePara.size(); ++i) {
     if (cumuChordLength[i] > curChordLength) {
-      uniformParaVector.emplace_back(samplePara[i-1]);
+      uniformParaVector.emplace_back(discretePara[i-1]);
       curSegmentIdx++;
       // 间隔更接近给定值，但最后一段会更短
       // curChordLength = cumuChordLength[i-1] + detLen;
@@ -238,13 +241,13 @@ std::vector<double> NURBS_Curve::get_uniform_sample(
       // std::cout << "idx = " << i - 1 << ", " << cumuChordLength[i - 1] << std::endl;
     }
   }
-  uniformParaVector.emplace_back(*(samplePara.end()-1));
+  uniformParaVector.emplace_back(*(discretePara.end()-1));
   return uniformParaVector;
 }
 
-std::vector<double> NURBS_Curve::get_uniform_sample(double length, double threshold) {
+std::vector<double> NURBS_Curve::get_uniform_sample(double length, double threshold, double segmentLen) {
   std::vector<double> paraVec;
-  discrete_arc_length(paraVec, 0, 1);
+  discrete_arc_length(paraVec, 0, 1, 1e-2, length*0.1);
   std::vector<double> cumuChordLength;
   get_chord_length(paraVec, cumuChordLength);
   std::vector<double> samplePara = get_uniform_sample(paraVec, cumuChordLength, length);
@@ -317,8 +320,7 @@ std::vector<double> NURBS_Curve::least_squares_fitting(const std::vector<Eigen::
   return paraU;
 }
 
-double NURBS_Curve::auto_fitting(const std::vector<Eigen::Vector3d> &points,
-                                 const double &threshold) {
+double NURBS_Curve::auto_fitting(const std::vector<Eigen::Vector3d> &points, const double &threshold) {
   const size_t n = points.size();
   if (ctrlPoints.size() < n) {
     *this = NURBS_Curve(order, n);
@@ -327,6 +329,7 @@ double NURBS_Curve::auto_fitting(const std::vector<Eigen::Vector3d> &points,
 
   // 二分法查找精度小于阈值的方式
   std::pair<size_t, double> bestFit{n, std::numeric_limits<double>::infinity()};
+  // for (int mid = order; mid < 5; ++mid) {
   for (int mid = order; mid < n + 1; ++mid) {
     printf("mid = %d\n", mid);
     activeCtrlPoints = mid;

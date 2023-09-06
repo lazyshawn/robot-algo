@@ -7,6 +7,8 @@ SET(CMAKE_CXX_FLAGS_DEBUG "$ENV{CXXFLAGS} -O0 -Wall -g2 -ggdb")
 # SET(CMAKE_CXX_FLAGS_RELEASE {CXXFLAGS} -O3 -Wall)
 SET(CMAKE_BUILD_TYPE "Debug")
 
+add_compile_definitions(PRINT_DEBUG_LOG)
+
 if(WIN32)
   # create symbol for exporting lib for dynmic library
   SET(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
@@ -20,10 +22,11 @@ if(WIN32)
   # Set the runtime lib for MSCV (global)
   set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 else()
-  # Set the installation directory
-  SET(CMAKE_INSTALL_PREFIX "${PROJECT_BINARY_DIR}/out/${PROJECT_NAME}-${CMAKE_BUILD_TYPE}")
   option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 endif()
+
+# Set the installation directory
+SET(CMAKE_INSTALL_PREFIX "${PROJECT_BINARY_DIR}/out/${PROJECT_NAME}-${CMAKE_BUILD_TYPE}")
 
 # include_directories(include)
 
