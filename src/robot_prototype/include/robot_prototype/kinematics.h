@@ -22,7 +22,7 @@ Eigen::Isometry3d serial_transfrom(const std::vector<Eigen::Vector<double, 6>>& 
 Eigen::Isometry3d forward_kinematics(const std::vector<Eigen::Vector<double,6>>& jointAxis, const std::vector<double>& theta, Eigen::Isometry3d M0);
 
 /* 
-* @brief : 肘形机械臂逆运动学 - Inverse kinematics of elbow manipulator
+* @brief : 肘形机械臂逆运动学，第一组关节角的角度最小 - Inverse kinematics of elbow manipulator
 * @param : jointAxis - 关节螺旋轴
 * @param : theta (rad) - 关节角
 * @param : M0 - 末端参考点的零位位姿
@@ -38,3 +38,10 @@ inverse_kinematics_elbow(const std::vector<Eigen::Vector<double, 6>>& jointAxis,
 * @return: 成功转换的标志位
 */
 bool wrap_joint(std::vector<double>& joint, const std::vector<std::vector<double>>& interval);
+
+/* 
+* @brief : 获取关节限位空间内等价的关节状态
+* @param : joint (rad) - 关节角
+* @param : interval - 关节角限位区间
+*/
+std::optional<std::vector<std::vector<double>>> get_equivalent_joint_state(std::vector<double>& jointState, const std::vector<std::vector<double>>& interval);

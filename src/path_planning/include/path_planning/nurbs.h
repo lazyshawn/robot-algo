@@ -85,7 +85,7 @@ public:
   * @param : threshold - (unused)
   * @return: 采样后节点对应的参数向量
   */
-  std::vector<double> get_uniform_sample(double length, double threshold = 1e-1);
+  std::vector<double> get_uniform_sample(double length, double threshold = 1e-1, double segmentLen = -1);
   std::vector<double> get_uniform_sample(const std::vector<double>& discretePara, const std::vector<double>& cumuChordLength,
                                          double length, double threshold = 1e-1) const;
 

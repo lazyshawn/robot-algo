@@ -34,8 +34,9 @@ bool RobotBase::load_config(std::string fname) {
   std::vector<double> upperJoint = config["joint_limits"]["positions"]["uppers"].get<std::vector<double>>();
   std::vector<double> lowerJoint = config["joint_limits"]["positions"]["lowers"].get<std::vector<double>>();
   jointLimit = std::vector<std::vector<double>>(numJoint);
+  // 角度转弧度并保存
   for (size_t i=0; i<numJoint; ++i) {
-    jointLimit[i] = {lowerJoint[i], upperJoint[i]};
+    jointLimit[i] = {lowerJoint[i]*M_PI/180, upperJoint[i]*M_PI/180};
   }
 
   // * 读取 TCP 位姿
@@ -82,12 +83,13 @@ bool RobotBase::load_config(std::string fname) {
 
 Eigen::Isometry3d RobotBase::solve_forward_kinematics(std::vector<double> theta, size_t eeIdx) const {
   // 处理耦合情况
-  if (jointCouple) {theta[2] += theta[1];}
+  if (jointCouple) {
+    theta[2] += theta[1];
+  }
   return forward_kinematics(jointAxis, theta, M0[eeIdx]);
 }
 
 std::optional<std::vector<std::vector<double>>> RobotBase::solve_inverse_kinematics(Eigen::Isometry3d pose, size_t eeIdx) const {
-  const double pi = 3.1415926535897932384626433832795028841971693993751058209;
   std::vector<std::vector<double>> ret;
   // 解析逆解
   if (auto opt = inverse_kinematics_elbow(jointAxis, pose, M0[eeIdx]); opt) {
@@ -104,9 +106,9 @@ std::optional<std::vector<std::vector<double>>> RobotBase::solve_inverse_kinemat
   }
 
   // 检验关节角是否超出限位区间
-  for (size_t i=0; i<ret.size(); ++i) {
-    wrap_joint(ret[i], jointLimit);
-  }
+  // for (size_t i=0; i<ret.size(); ++i) {
+  //   wrap_joint(ret[i], jointLimit);
+  // }
 
   return ret;
 }

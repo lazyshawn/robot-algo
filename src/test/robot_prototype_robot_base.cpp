@@ -3,7 +3,8 @@
 
 const double pi = 3.1415926535897932384626433832795028841971693993751058209;
 
-std::string fname("data/config/fanuc_m20id25_scan.json");
+// std::string fname("data/config/fanuc_m20id25_scan.json");
+std::string fname("data/config/YASKAWA_GP_25.json");
 RobotBase robot;
 
 void pk_problem();
@@ -18,6 +19,20 @@ int main(int argc, char** argv) {
   }
 
   kinematics();
+  // std::vector<double> joint{10,20,30,40,50,60};
+  // for (size_t i=0; i<joint.size(); ++i) {
+  //   joint[i] *= M_PI/180;
+  // }
+  //
+  // auto jointStack = get_equivalent_joint_state(joint, robot.jointLimit);
+  // if (jointStack) {
+  //   for (auto jnt : jointStack.value()) {
+  //     for (size_t i=0; i<jnt.size(); ++i) {
+  //       std::cout << jnt[i]*180/M_PI << ", ";
+  //     }
+  //     std::cout << std::endl;
+  //   }
+  // }
 
   return 0;
 }
@@ -27,6 +42,12 @@ void calc() {
   // Eigen::Quaterniond pre(0.717991389577189, -0.581413977297589, 0.297399432761697, -0.240831328711687);
   // Eigen::Quaterniond aft(0.18024, 0.906127, 0.0746578, 0.37533);
   // std::cout << aft*pre.inverse() << std::endl;
+  Eigen::Matrix3d final({{-sqrt(2)/2,0,sqrt(2)/2}, {0,1,0}, {-sqrt(2)/2,0,-sqrt(2)/2}});
+  Eigen::Matrix3d pre({{sqrt(2)/2,0,sqrt(2)/2}, {0,-1,0}, {sqrt(2)/2,0,-sqrt(2)/2}});
+  Eigen::AngleAxis rot(-pi/8, Eigen::Vector3d({1,0,0}));
+  Eigen::Matrix3d aft = rot*pre;
+  // std::cout.precision(18);
+  std::cout << "Quaterniond = \n" << Eigen::Quaterniond(aft) << std::endl;
 
   Eigen::Isometry3d TargetFrame;
   TargetFrame.translation() = Eigen::Vector3d(1513.17, -112.956, -226.31);
@@ -45,15 +66,9 @@ void calc() {
 
 void kinematics() {
   // 求解正运动学
-  // std::vector<double> theta({0,-M_PI/2, 0,0,M_PI/2,0});
-  Eigen::Matrix3d final({{-sqrt(2)/2,0,sqrt(2)/2}, {0,1,0}, {-sqrt(2)/2,0,-sqrt(2)/2}});
-  Eigen::Matrix3d pre({{sqrt(2)/2,0,sqrt(2)/2}, {0,-1,0}, {sqrt(2)/2,0,-sqrt(2)/2}});
-  Eigen::AngleAxis rot(-pi/8, Eigen::Vector3d({1,0,0}));
-  Eigen::Matrix3d aft = rot*pre;
-  // std::cout.precision(18);
-  std::cout << "Quaterniond = \n" << Eigen::Quaterniond(aft) << std::endl;
   // 实际走的
   std::vector<double> theta({-5.719, 36.739, -40.95, 0, -49.053, -72.278});
+  // std::vector<double> theta({-5.719, 36.739, -40.95, 0, -49.053, -72.278});
   // std::vector<double> theta({-2.198, 36.871, -40.791, 0, -49.212, -73.303});
   // 应该走的
   // std::vector<double> theta({3.567,  48.680, -32.630, 0.047, -56.355, 152.630});

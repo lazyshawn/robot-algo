@@ -245,7 +245,7 @@ std::vector<double> NURBS_Curve::get_uniform_sample(const std::vector<double>& d
   return uniformParaVector;
 }
 
-std::vector<double> NURBS_Curve::get_uniform_sample(double length, double threshold) {
+std::vector<double> NURBS_Curve::get_uniform_sample(double length, double threshold, double segmentLen) {
   std::vector<double> paraVec;
   discrete_arc_length(paraVec, 0, 1, 1e-2, length*0.1);
   std::vector<double> cumuChordLength;
@@ -329,8 +329,8 @@ double NURBS_Curve::auto_fitting(const std::vector<Eigen::Vector3d> &points, con
 
   // 二分法查找精度小于阈值的方式
   std::pair<size_t, double> bestFit{n, std::numeric_limits<double>::infinity()};
-  for (int mid = order; mid < 5; ++mid) {
-  // for (int mid = order; mid < n + 1; ++mid) {
+  // for (int mid = order; mid < 5; ++mid) {
+  for (int mid = order; mid < n + 1; ++mid) {
     printf("mid = %d\n", mid);
     activeCtrlPoints = mid;
     // 设置节点向量

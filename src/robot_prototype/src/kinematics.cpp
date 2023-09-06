@@ -23,7 +23,7 @@ std::optional<std::vector<std::vector<double>>>
 inverse_kinematics_elbow(const std::vector<Eigen::Vector<double,6>>& jointAxis, Eigen::Isometry3d pose, Eigen::Isometry3d M0) {
 
   // 解向量的迭代器
-  typedef std::vector<std::vector<double>>::reverse_iterator vvRIte;
+  typedef std::vector<std::vector<double>>::iterator vvRIte;
 
   // 腕关节点
   Eigen::Vector3d pw = get_twist_intersection({jointAxis[3], jointAxis[4], jointAxis[5]});
@@ -40,44 +40,53 @@ inverse_kinematics_elbow(const std::vector<Eigen::Vector<double,6>>& jointAxis, 
   std::vector<double> theta(6,0);
   // 所有解的集合
   std::vector<std::vector<double>> solSet;
+  std::vector<std::vector<double>> tmpSet;
   solSet.reserve(8);
 
   // * e1 影响 pw 在 xoy 平面上的方向
+  theta[0] = atan2(-gPw[1], -gPw[0]);
+  solSet.push_back(theta);
+  // 理论上需要考虑折叠的情况，故有八组解
   theta[0] = atan2(gPw[1], gPw[0]);
   solSet.push_back(theta);
 
   // * e3: pw, pb 之间的距离仅取决与 e3
-  if (auto opt = pk_subproblem_3(jointAxis[2], pw, pb, (gPw-lieSE3(jointAxis[0]*theta[0])*pb).norm()); !opt) {
-    printf("# inverse_kinematics_elbow(): q3.\n");
-    return std::nullopt;
-  } else {
-    // 生成新的解
-    for (vvRIte ite=solSet.rbegin(); ite!=solSet.rend(); ++ite) {
+  tmpSet.clear();
+  for (vvRIte ite=solSet.begin(); ite!=solSet.end(); ++ite) {
+    if (auto opt = pk_subproblem_3(jointAxis[2], pw, pb, (gPw-lieSE3(jointAxis[0]*(*ite)[0])*pb).norm()); !opt) {
+      printf("# inverse_kinematics_elbow(): q3.\n");
+      // 舍弃当前解
+      solSet.erase(ite--);
+    } else {
       (*ite)[2] = opt.value()[0];
       // 生成新的解
       theta = *ite;
       theta[2] = opt.value()[1];
-      solSet.push_back(theta);
+      tmpSet.push_back(theta);
     }
   }
+  solSet.insert(solSet.end(), tmpSet.begin(), tmpSet.end());
 
   // * e2: 每一组 e1,e3 有一个对应的 e2
-  for (auto& sol : solSet) {
-    if (auto opt = pk_subproblem_1(jointAxis[1], lieSE3(jointAxis[2]*sol[2])*pw, lieSE3(-jointAxis[0]*sol[0])*gPw); !opt) {
+  for (vvRIte ite=solSet.begin(); ite!=solSet.end(); ++ite) {
+    if (auto opt = pk_subproblem_1(jointAxis[1], lieSE3(jointAxis[2]*(*ite)[2])*pw, lieSE3(-jointAxis[0]*(*ite)[0])*gPw); !opt) {
       printf("# inverse_kinematics_elbow(): q2.\n");
-      return std::nullopt;
+      // 舍弃当前解，用反向迭代器删除元素
+      solSet.erase(ite--);
     } else {
-      sol[1] = opt.value();
+      (*ite)[1] = opt.value();
     }
   }
 
   // * e4, e5: 求解 e1,e2,e3 后 pe 的位置取决于 e4,e5
-  for (vvRIte ite=solSet.rbegin(); ite!=solSet.rend(); ++ite) {
+  tmpSet.clear();
+  for (vvRIte ite=solSet.begin(); ite!=solSet.end(); ++ite) {
     // g2 = [ie3][ie2][ie1]g1 = [e4][e5][e6]
     Eigen::Isometry3d g2 = lieSE3(-jointAxis[2]*(*ite)[2])*lieSE3(-jointAxis[1]*(*ite)[1])*lieSE3(-jointAxis[0]*(*ite)[0])*g1;
     if (auto opt = pk_subproblem_2(jointAxis[3], jointAxis[4], pe, g2*pe); !opt) {
       printf("# inverse_kinematics_elbow(): q45.\n");
-      return std::nullopt;
+      // 舍弃当前解
+      solSet.erase(ite--);
     } else {
       (*ite)[3] = opt.value()[0][0];
       (*ite)[4] = opt.value()[0][1];
@@ -85,16 +94,18 @@ inverse_kinematics_elbow(const std::vector<Eigen::Vector<double,6>>& jointAxis, 
       theta = *ite;
       theta[3] = opt.value()[1][0];
       theta[4] = opt.value()[1][1];
-      solSet.push_back(theta);
+      tmpSet.push_back(theta);
     }
   }
+  solSet.insert(solSet.end(), tmpSet.begin(), tmpSet.end());
 
   // * e6: 针对每一组解计算对应的 e6
-  for (vvRIte ite=solSet.rbegin(); ite!=solSet.rend(); ++ite) {
+  for (vvRIte ite=solSet.begin(); ite!=solSet.end(); ++ite) {
     Eigen::Isometry3d g2 = lieSE3(-jointAxis[2]*(*ite)[2])*lieSE3(-jointAxis[1]*(*ite)[1])*lieSE3(-jointAxis[0]*(*ite)[0])*g1;
     if (auto opt = pk_subproblem_1(jointAxis[5], pb, lieSE3(-jointAxis[4]*(*ite)[4])*lieSE3(-jointAxis[3]*(*ite)[3])*g2*pb); !opt) {
       printf("inverse_kinematics_elbow(): q6.\n");
-      return std::nullopt;
+      // 舍弃当前解
+      solSet.erase(ite--);
     } else {
       (*ite)[5] = opt.value();
     }
@@ -126,5 +137,66 @@ bool wrap_joint(std::vector<double>& joint, const std::vector<std::vector<double
     }
   }
   return success;
+}
+
+std::optional<std::vector<std::vector<double>>> get_equivalent_joint_state(std::vector<double>& jointState, const std::vector<std::vector<double>>& interval) {
+  // 关节个数
+  size_t num = jointState.size();
+  // 返回的等价解
+  std::vector<std::vector<double>> ret;
+
+  // 每一个关节上处在限位区间内的等价角度值
+  std::vector<std::vector<double>> option(num);
+  for (size_t i=0; i<num; ++i) {
+    // 检测关节角是否属于 [-2*PI, 2*PI]
+    if (jointState[i] < -2*M_PI || jointState[i] > 2*M_PI) {
+      printf("Error: #find_equivalent_joint_state() : theta[%zd] overrange. ", i);
+      return std::nullopt;
+    }
+    double tmp = jointState[i];
+    tmp += (tmp > 0) ? -2*M_PI : 2*M_PI;
+    // 当前关节上的等价角度值
+    std::vector<double> opt;
+    // 当前关节角是否在限位区间内
+    if (jointState[i] >= interval[i][0] && jointState[i] <= interval[i][1]) {
+      opt.emplace_back(jointState[i]);
+      // printf("jnt[%zd]: %f < %f > %f\n", i, interval[i][0], jointStack[i], interval[i][1]);
+    }
+    // 优弧角是否在限位区间内
+    if (tmp >= interval[i][0] && tmp <= interval[i][1]) {
+      opt.emplace_back(tmp);
+      // printf("tmp[%zd]: %f < %f > %f\n", i, interval[i][0], tmp, interval[i][1]);
+    }
+    // 如果当前关节角无法转换到关节限位区间内，则等价解不存在
+    if (!opt.size()) {
+      return std::nullopt;
+    }
+    option[i] = opt;
+  }
+
+  // create combinations of several vectors without hardcoding loops
+  // Ref: https://stackoverflow.com/a/1703575
+  typedef std::vector<double>::iterator vecIte;
+  std::vector<vecIte> ite(num);
+  for (size_t i=0; i<num; ++i) {
+    ite[i] = option[i].begin();
+  }
+  while (ite[0] != option[0].end()) {
+    // process the pointed-to elements
+    std::vector<double> joint(num);
+    for (size_t i=0; i<num; ++i) {
+      joint[i] = *ite[i];
+    }
+    ret.push_back(joint);
+
+    // the following increments the "odometer" by 1
+    ++ite[num-1];
+    for (int i = num-1; (i > 0) && (ite[i] == option[i].end()); --i) {
+      ite[i] = option[i].begin();
+      ++ite[i-1];
+    }
+  }
+
+  return ret;
 }
 

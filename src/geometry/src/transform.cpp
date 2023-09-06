@@ -1,5 +1,16 @@
 #include "geometry/transform.h"
-#include <iostream>
+// #include <iostream>
+
+Eigen::Matrix3d euler2SO3(std::vector<double> theta, std::vector<size_t> axisIdx) {
+  const std::vector<Eigen::Vector3d> axis = {Eigen::Vector3d::UnitX(), Eigen::Vector3d::UnitY(), Eigen::Vector3d::UnitZ()};
+
+  Eigen::Matrix3d rotmat = Eigen::Matrix3d::Identity();
+  rotmat = Eigen::AngleAxisd(theta[2], axis[axisIdx[2]])
+    * Eigen::AngleAxisd(theta[1], axis[axisIdx[1]])
+    * Eigen::AngleAxisd(theta[0], axis[axisIdx[0]]);
+
+  return rotmat;
+}
 
 Eigen::Matrix4d liese3(Eigen::Vector<double,6> twist) {
   Eigen::Vector3d v = twist.head<3>(), w = twist.tail<3>();

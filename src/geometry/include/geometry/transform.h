@@ -13,6 +13,13 @@
 */
 
 /* 
+* @brief : 欧拉角转旋转矩阵
+* @param : endIdx - 终止螺旋轴的索引
+* @return: 齐次转换矩阵
+*/
+Eigen::Matrix3d euler2SO3(std::vector<double> theta, std::vector<size_t> axisIdx = {2,1,0});
+
+/* 
 * @brief : twist -> se(3)
 * @param : vec - 旋转向量
 * @return: vec 的反对称矩阵
@@ -33,6 +40,11 @@ Eigen::Matrix3d lieso3(Eigen::Vector3d vec);
 */
 Eigen::Isometry3d lieSE3(Eigen::Vector<double,6> twist);
 
+/* 
+* @brief : 反对称矩阵转旋转轴
+* @param : so3 - 反对称矩阵
+* @return: 单位旋转轴
+*/
 std::optional<Eigen::Vector3d> so3toAxis(Eigen::Matrix3d skewSym);
 
 /* 
