@@ -44,4 +44,4 @@ bool wrap_joint(std::vector<double>& joint, const std::vector<std::vector<double
 * @param : joint (rad) - 关节角
 * @param : interval - 关节角限位区间
 */
-std::optional<std::vector<std::vector<double>>> get_equivalent_joint_state(std::vector<double>& jointState, const std::vector<std::vector<double>>& interval);
+std::vector<std::vector<double>> get_equivalent_joint_state(std::vector<double>& jointState, const std::vector<std::vector<double>>& interval);

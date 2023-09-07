@@ -90,28 +90,30 @@ Eigen::Isometry3d RobotBase::solve_forward_kinematics(std::vector<double> theta,
 }
 
 std::optional<std::vector<std::vector<double>>> RobotBase::solve_inverse_kinematics(Eigen::Isometry3d pose, size_t eeIdx) const {
-  std::vector<std::vector<double>> ret;
-  // 解析逆解
+  std::vector<std::vector<double>> solSet;
+  // 获取所有不同构型的逆解
   if (auto opt = inverse_kinematics_elbow(jointAxis, pose, M0[eeIdx]); opt) {
-    ret = opt.value();
+    solSet = opt.value();
   } else {
     // 当解析解误差过大时使用数值逆解
+  }
+  if (!solSet.size()) { return std::nullopt; }
+
+  // 根据关节限位过滤不合理的构型
+  std::vector<std::vector<double>> equSol;
+  for (size_t i=0; i<solSet.size(); ++i) {
+    std::vector<std::vector<double>> tmp = get_equivalent_joint_state(solSet[i], jointLimit);
+    equSol.insert(equSol.end(), tmp.begin(), tmp.end());
+  }
+  if (!equSol.size()) {
+    printf("Error: no solution exist in jointLimit.\n");
   }
 
   // 处理耦合情况
   if (jointCouple) {
-    for (size_t i=0; i<ret.size(); ++i) {
-      ret[i][2] -= ret[i][1];
+    for (auto& sol : equSol) {
+      sol[2] -= sol[1];
     }
   }
-
-  // 检验关节角是否超出限位区间
-  // for (size_t i=0; i<ret.size(); ++i) {
-  //   wrap_joint(ret[i], jointLimit);
-  // }
-
-  if (!ret.size()) {
-    return std::nullopt;
-  }
-  return ret;
+  return equSol;
 }

@@ -104,8 +104,8 @@ std::optional<double> pk_subproblem_1(Eigen::Vector<double,6> twist, Eigen::Vect
   Eigen::Vector3d up = u - w*w.transpose()*u, vp = v - w*w.transpose()*v;
 
   // 解的存在性条件
-  if (std::fabs(w.dot(u) - w.dot(v)) > 1e-9 || std::fabs(up.norm() - vp.norm()) > 1e-9) {
-    printf("Error! # pk_subproblem_1(): %f, %f. ", std::fabs(w.dot(u) - w.dot(v)), std::fabs(up.squaredNorm() - vp.squaredNorm()));
+  if (std::fabs(w.dot(u) - w.dot(v)) > 1e-8 || std::fabs(up.norm() - vp.norm()) > 1e-8) {
+    printf("Error! # pk_subproblem_1(): %.9f, %.9f. ", std::fabs(w.dot(u) - w.dot(v)), std::fabs(up.norm() - vp.norm()));
     return std::nullopt;
   }
   return atan2(w.dot(up.cross(vp)),up.dot(vp));
@@ -128,7 +128,7 @@ std::optional<std::vector<std::vector<double>>> pk_subproblem_2(Eigen::Vector<do
   if (squaredGama < 0) {
     printf("Error! # pk_subproblem_2(): gama < 0. ");
     return std::nullopt;
-  } else if (squaredGama < 1e-9) {
+  } else if (std::sqrt(squaredGama) < 1e-9) {
     // 一组解
     numSol = 1;
   } else {
@@ -137,7 +137,7 @@ std::optional<std::vector<std::vector<double>>> pk_subproblem_2(Eigen::Vector<do
   }
 
   // 始终返回两组解
-  double gama = sqrt(squaredGama);
+  double gama = std::sqrt(squaredGama);
   std::vector<Eigen::Vector3d> z(2);
   z[0] = alpha*w[0] + beta*w[1] + gama*(w[0].cross(w[1]));
   z[1] = z[0] - 2*gama*(w[0].cross(w[1]));
@@ -184,7 +184,7 @@ std::optional<std::vector<double>> pk_subproblem_3(Eigen::Vector<double,6> twist
   double minDis = std::fabs(up.norm() - vp.norm()), maxDis = up.norm() + vp.norm();
   // 解的存在性条件: |up-vp| <= dp <= up+vp
   if (std::sqrt(squaredDp) < minDis || std::sqrt(squaredDp) > maxDis) {
-    printf("Error: # pk_subproblem_3(): no solution. ");
+    printf("Error: # pk_subproblem_3(): %.9f < %.9f > %.9f. ", minDis, std::sqrt(squaredDp), maxDis);
     return std::nullopt;
   } else if (std::fabs(std::sqrt(squaredDp) - minDis) < 1e-9 || std::fabs(std::sqrt(squaredDp) - maxDis) < 1e-9) {
     numSol = 1;

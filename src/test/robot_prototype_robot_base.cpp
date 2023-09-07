@@ -58,6 +58,7 @@ void kinematics() {
   // 求解正运动学
   // 实际走的
   std::vector<double> theta({-5.719, 36.739, -40.95, 0, -49.053, -72.278});
+  // std::vector<double> theta({-5.719, 36.739, -4.211, 0, -49.053, -72.278});
   // std::vector<double> theta({-2.198, 36.871, -40.791, 0, -49.212, -73.303});
   // 应该走的
   // std::vector<double> theta({3.567,  48.680, -32.630, 0.047, -56.355, 152.630});
@@ -86,7 +87,7 @@ void kinematics() {
       std::cout << ikSol[i][j]*180/pi << ", ";
     }
     std::cout << std::endl;
-    std::cout << robot.solve_forward_kinematics(ikSol[i]).matrix() << "\n" << std::endl;
+    // std::cout << robot.solve_forward_kinematics(ikSol[i]).matrix() << "\n" << std::endl;
   }
 
 }

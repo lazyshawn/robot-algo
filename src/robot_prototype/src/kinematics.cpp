@@ -65,7 +65,10 @@ inverse_kinematics_elbow(const std::vector<Eigen::Vector<double,6>>& jointAxis, 
       solSet.erase(ite--);
     } else {
       (*ite)[2] = opt.value()[0];
-      if (opt.value().size() == 1) continue;
+      if (opt.value().size() == 1) {
+        printf("# inverse_kinematics_elbow() : q3, equivalent sol, Loss 1 sol.\n");
+        continue;
+      }
       // 生成新的解
       theta = *ite;
       theta[2] = opt.value()[1];
@@ -91,13 +94,16 @@ inverse_kinematics_elbow(const std::vector<Eigen::Vector<double,6>>& jointAxis, 
     // g2 = [ie3][ie2][ie1]g1 = [e4][e5][e6]
     Eigen::Isometry3d g2 = lieSE3(-jointAxis[2]*(*ite)[2])*lieSE3(-jointAxis[1]*(*ite)[1])*lieSE3(-jointAxis[0]*(*ite)[0])*g1;
     if (auto opt = pk_subproblem_2(jointAxis[3], jointAxis[4], pe, g2*pe); !opt) {
-      printf("# inverse_kinematics_elbow(): q45, Loss 2 sols. \n");
+      printf("# inverse_kinematics_elbow(): q45, Loss 2 sols.\n");
       // 舍弃当前解
       solSet.erase(ite--);
     } else {
       (*ite)[3] = opt.value()[0][0];
       (*ite)[4] = opt.value()[0][1];
-      if (opt.value().size() == 1) continue;
+      if (opt.value().size() == 1) {
+        printf("# inverse_kinematics_elbow() : q45, equivalent sol, Loss 1 sol.\n");
+        continue;
+      }
       // 生成新的解
       theta = *ite;
       theta[3] = opt.value()[1][0];
@@ -147,7 +153,7 @@ bool wrap_joint(std::vector<double>& joint, const std::vector<std::vector<double
   return success;
 }
 
-std::optional<std::vector<std::vector<double>>> get_equivalent_joint_state(std::vector<double>& jointState, const std::vector<std::vector<double>>& interval) {
+std::vector<std::vector<double>> get_equivalent_joint_state(std::vector<double>& jointState, const std::vector<std::vector<double>>& interval) {
   // 关节个数
   size_t num = jointState.size();
   // 返回的等价解
@@ -159,7 +165,7 @@ std::optional<std::vector<std::vector<double>>> get_equivalent_joint_state(std::
     // 检测关节角是否属于 [-2*PI, 2*PI]
     if (jointState[i] < -2*M_PI || jointState[i] > 2*M_PI) {
       printf("Error: #find_equivalent_joint_state() : theta[%zd] overrange. ", i);
-      return std::nullopt;
+      return ret;
     }
     double tmp = jointState[i];
     tmp += (tmp > 0) ? -2*M_PI : 2*M_PI;
@@ -177,7 +183,7 @@ std::optional<std::vector<std::vector<double>>> get_equivalent_joint_state(std::
     }
     // 如果当前关节角无法转换到关节限位区间内，则等价解不存在
     if (!opt.size()) {
-      return std::nullopt;
+      return ret;
     }
     option[i] = opt;
   }
