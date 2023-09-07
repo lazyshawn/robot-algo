@@ -1,4 +1,5 @@
 #include "robot_prototype/kinematics.h"
+#include <iostream>
 
 Eigen::Isometry3d serial_transfrom(const std::vector<Eigen::Vector<double, 6>>& jointAxis, const std::vector<double>& theta, size_t begIdx, size_t endIdx) {
   // 将默认终止序号设为最后一个关节轴序号
@@ -40,25 +41,31 @@ inverse_kinematics_elbow(const std::vector<Eigen::Vector<double,6>>& jointAxis, 
   std::vector<double> theta(6,0);
   // 所有解的集合
   std::vector<std::vector<double>> solSet;
+  // 临时存放多解的集合
   std::vector<std::vector<double>> tmpSet;
   solSet.reserve(8);
 
   // * e1 影响 pw 在 xoy 平面上的方向
-  theta[0] = atan2(-gPw[1], -gPw[0]);
-  solSet.push_back(theta);
-  // 理论上需要考虑折叠的情况，故有八组解
-  theta[0] = atan2(gPw[1], gPw[0]);
-  solSet.push_back(theta);
+  double dy = gPw[1], dx = gPw[0];
+  for (size_t i=0; i<2; ++i) {
+    theta[0] = atan2(dy, dx);
+    // 根据关节 1 的正方向修正旋转角度
+    if (jointAxis[0][5] < 0) theta[0] *= -1;
+    solSet.push_back(theta);
+    // 理论上需要考虑折叠的情况，故有八组解
+    dy *= -1; dx *= -1;
+  }
 
   // * e3: pw, pb 之间的距离仅取决与 e3
   tmpSet.clear();
   for (vvRIte ite=solSet.begin(); ite!=solSet.end(); ++ite) {
     if (auto opt = pk_subproblem_3(jointAxis[2], pw, pb, (gPw-lieSE3(jointAxis[0]*(*ite)[0])*pb).norm()); !opt) {
-      printf("# inverse_kinematics_elbow(): q3.\n");
+      printf("# inverse_kinematics_elbow(): q3, Loss 4 sols.\n");
       // 舍弃当前解
       solSet.erase(ite--);
     } else {
       (*ite)[2] = opt.value()[0];
+      if (opt.value().size() == 1) continue;
       // 生成新的解
       theta = *ite;
       theta[2] = opt.value()[1];
@@ -70,7 +77,7 @@ inverse_kinematics_elbow(const std::vector<Eigen::Vector<double,6>>& jointAxis, 
   // * e2: 每一组 e1,e3 有一个对应的 e2
   for (vvRIte ite=solSet.begin(); ite!=solSet.end(); ++ite) {
     if (auto opt = pk_subproblem_1(jointAxis[1], lieSE3(jointAxis[2]*(*ite)[2])*pw, lieSE3(-jointAxis[0]*(*ite)[0])*gPw); !opt) {
-      printf("# inverse_kinematics_elbow(): q2.\n");
+      printf("# inverse_kinematics_elbow(): q2, Loss 2 sols.\n");
       // 舍弃当前解，用反向迭代器删除元素
       solSet.erase(ite--);
     } else {
@@ -84,12 +91,13 @@ inverse_kinematics_elbow(const std::vector<Eigen::Vector<double,6>>& jointAxis, 
     // g2 = [ie3][ie2][ie1]g1 = [e4][e5][e6]
     Eigen::Isometry3d g2 = lieSE3(-jointAxis[2]*(*ite)[2])*lieSE3(-jointAxis[1]*(*ite)[1])*lieSE3(-jointAxis[0]*(*ite)[0])*g1;
     if (auto opt = pk_subproblem_2(jointAxis[3], jointAxis[4], pe, g2*pe); !opt) {
-      printf("# inverse_kinematics_elbow(): q45.\n");
+      printf("# inverse_kinematics_elbow(): q45, Loss 2 sols. \n");
       // 舍弃当前解
       solSet.erase(ite--);
     } else {
       (*ite)[3] = opt.value()[0][0];
       (*ite)[4] = opt.value()[0][1];
+      if (opt.value().size() == 1) continue;
       // 生成新的解
       theta = *ite;
       theta[3] = opt.value()[1][0];

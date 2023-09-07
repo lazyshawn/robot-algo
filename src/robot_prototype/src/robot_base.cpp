@@ -110,5 +110,8 @@ std::optional<std::vector<std::vector<double>>> RobotBase::solve_inverse_kinemat
   //   wrap_joint(ret[i], jointLimit);
   // }
 
+  if (!ret.size()) {
+    return std::nullopt;
+  }
   return ret;
 }

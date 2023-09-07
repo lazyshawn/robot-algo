@@ -184,6 +184,7 @@ std::optional<std::vector<double>> pk_subproblem_3(Eigen::Vector<double,6> twist
   double minDis = std::fabs(up.norm() - vp.norm()), maxDis = up.norm() + vp.norm();
   // 解的存在性条件: |up-vp| <= dp <= up+vp
   if (std::sqrt(squaredDp) < minDis || std::sqrt(squaredDp) > maxDis) {
+    printf("Error: # pk_subproblem_3(): no solution. ");
     return std::nullopt;
   } else if (std::fabs(std::sqrt(squaredDp) - minDis) < 1e-9 || std::fabs(std::sqrt(squaredDp) - maxDis) < 1e-9) {
     numSol = 1;
