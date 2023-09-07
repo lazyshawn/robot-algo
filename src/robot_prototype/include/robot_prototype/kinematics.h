@@ -44,4 +44,11 @@ bool wrap_joint(std::vector<double>& joint, const std::vector<std::vector<double
 * @param : joint (rad) - 关节角
 * @param : interval - 关节角限位区间
 */
-std::vector<std::vector<double>> get_equivalent_joint_state(std::vector<double>& jointState, const std::vector<std::vector<double>>& interval);
+std::vector<std::vector<double>> get_equivalent_joint_state(const std::vector<double>& jointState, const std::vector<std::vector<double>>& interval);
+
+/* 
+* @brief : 查找到目标关节状态最近的一组关节状态
+* @param : jointStack - 关节状态向量
+* @param : goal - 目标关节角
+*/
+std::vector<double> get_nearest_joint_state(const std::vector<std::vector<double>>& jointStack, const std::vector<double>& goal = std::vector<double>());

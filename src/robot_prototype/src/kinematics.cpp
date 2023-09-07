@@ -153,7 +153,7 @@ bool wrap_joint(std::vector<double>& joint, const std::vector<std::vector<double
   return success;
 }
 
-std::vector<std::vector<double>> get_equivalent_joint_state(std::vector<double>& jointState, const std::vector<std::vector<double>>& interval) {
+std::vector<std::vector<double>> get_equivalent_joint_state(const std::vector<double>& jointState, const std::vector<std::vector<double>>& interval) {
   // 关节个数
   size_t num = jointState.size();
   // 返回的等价解
@@ -214,3 +214,34 @@ std::vector<std::vector<double>> get_equivalent_joint_state(std::vector<double>&
   return ret;
 }
 
+std::vector<double> get_nearest_joint_state(const std::vector<std::vector<double>>& jointStack, const std::vector<double>& goal) {
+  if (!jointStack.size()) return std::vector<double>();
+  size_t numJoint = jointStack[0].size();
+
+  // 默认计算到零位的距离
+  std::vector<double> goalJoint = goal;
+  if (!goal.size()) {
+    goalJoint = std::vector<double>(numJoint, 0.0);
+  }
+
+  // 计算每一组关节状态到目标位置需要转动的角度
+  std::vector<double> manhatonDist(numJoint, std::numeric_limits<double>::infinity());
+  for (size_t i=0; i<jointStack.size(); ++i) {
+    double tmp = 0.0;
+    for (size_t j=0; j<numJoint; ++j) {
+      tmp += std::fabs(jointStack[i][j] - goalJoint[j]);
+    }
+    manhatonDist[i] = tmp;
+  }
+
+  // 查找最近关节状态的序号
+  size_t idx = 0;
+  double minDist = std::numeric_limits<double>::infinity();
+  for (size_t i=0; i<jointStack.size(); ++i) {
+    if (manhatonDist[i] < minDist) {
+      minDist = manhatonDist[i];
+      idx = i;
+    }
+  }
+  return jointStack[idx];
+}

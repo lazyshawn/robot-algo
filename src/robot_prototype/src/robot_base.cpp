@@ -11,13 +11,13 @@ bool RobotBase::load_config(std::string fname) {
   }
 
   // 检查需要的字段
-  // std::vector<std::string> requiredField({"sdf", "sd", "sds"});
-  // for (auto field : requiredField) {
-  //   if (!config.contains(field)) {
-  //     printf("Error! # loadjson(): no required field \"%s\". ", field.c_str());
-  //     return false;
-  //   }
-  // }
+  std::vector<std::string> requiredField({"end-effector", "PoE_joint"});
+  for (auto field : requiredField) {
+    if (!config.contains(field)) {
+      printf("Error! # loadjson(): no required field \"%s\". ", field.c_str());
+      return false;
+    }
+  }
 
   // 读取机械臂型号，非必要
   if (auto j = get_json_field(config, "robot_brand"); j) {
@@ -97,7 +97,16 @@ std::optional<std::vector<std::vector<double>>> RobotBase::solve_inverse_kinemat
   } else {
     // 当解析解误差过大时使用数值逆解
   }
-  if (!solSet.size()) { return std::nullopt; }
+  if (!solSet.size()) {
+    printf("Error: # solve_inverse_kinematics(): no IK solution exist.\n");
+    return std::nullopt;
+  }
+  // 处理耦合情况
+  if (jointCouple) {
+    for (auto& jnt : solSet) {
+      jnt[2] -= jnt[1];
+    }
+  }
 
   // 根据关节限位过滤不合理的构型
   std::vector<std::vector<double>> equSol;
@@ -106,14 +115,12 @@ std::optional<std::vector<std::vector<double>>> RobotBase::solve_inverse_kinemat
     equSol.insert(equSol.end(), tmp.begin(), tmp.end());
   }
   if (!equSol.size()) {
-    printf("Error: no solution exist in jointLimit.\n");
+    printf("Error: # solve_inverse_kinematics(): no solution exist in jointLimit.\n");
+    return std::nullopt;
   }
 
-  // 处理耦合情况
-  if (jointCouple) {
-    for (auto& sol : equSol) {
-      sol[2] -= sol[1];
-    }
-  }
-  return equSol;
+  // 计算到零位最近的关节状态
+  std::vector<double> sol = get_nearest_joint_state(equSol);
+
+  return std::vector<std::vector<double>>({sol});
 }
