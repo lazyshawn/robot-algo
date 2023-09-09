@@ -18,4 +18,6 @@ elif [[ "$1" == "project" ]]; then
 mkdir -p build
 cd build
 cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1 ..
+elif [[ "$1" == "test" ]]; then
+ctest --output-on-failure --test-dir build --build-run-dir .. --build-exe-dir ..
 fi

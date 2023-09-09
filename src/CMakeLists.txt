@@ -2,6 +2,9 @@
 cmake_policy(SET CMP0095 NEW)
 SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib:\${ORIGIN}/../lib:${CMAKE_SOURCE_DIR}/lib")
 
+# Include gnuinstalldir to get the platform's standard directories:
+include(GNUInstallDirs)
+
 add_subdirectory(user_interface)
 add_subdirectory(geometry)
 add_subdirectory(collision_detection)
@@ -16,7 +19,7 @@ add_subdirectory(test)
 # Install package
 ###############################################################################
 # Include gnuinstalldir to get the platform's standard directories:
-include(GNUInstallDirs)
+# include(GNUInstallDirs)
 
 # Now, we install the export set. This will generate a CMake file exporting all the target for other projects to use:
 install(EXPORT RobotAlgoTargets

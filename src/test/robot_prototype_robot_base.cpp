@@ -57,7 +57,8 @@ void calc() {
 void kinematics() {
   // 求解正运动学
   // 实际走的
-  std::vector<double> theta({-5.719, 36.739, -40.95, 0, -49.053, -72.278});
+  std::vector<double> theta({17.1239, 71.083, -65.29274, 0, -24.7072, -17.1239});
+  // std::vector<double> theta({-5.719, 36.739, -40.95, 0, -49.053, -72.278});
   // std::vector<double> theta({-5.719, 36.739, -4.211, 0, -49.053, -72.278});
   // std::vector<double> theta({-2.198, 36.871, -40.791, 0, -49.212, -73.303});
   // 应该走的
@@ -75,6 +76,8 @@ void kinematics() {
 
   // 求解逆运动学
   std::vector<std::vector<double>> ikSol;
+  tran.linear() = Eigen::Matrix3d({{0,0,1}, {0,1,0}, {-1,0,0}});
+  tran.translation() = Eigen::Vector3d(2274.1, 700.6, -282);
   if (auto opt = robot.solve_inverse_kinematics(tran); !opt) {
     std::cout << "No inverse kinematics solution." << std::endl;
     return;

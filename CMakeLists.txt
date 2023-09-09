@@ -7,6 +7,7 @@ SET(CMAKE_CXX_FLAGS_DEBUG "$ENV{CXXFLAGS} -O0 -Wall -g2 -ggdb")
 # SET(CMAKE_CXX_FLAGS_RELEASE {CXXFLAGS} -O3 -Wall)
 SET(CMAKE_BUILD_TYPE "Debug")
 
+option(ENABLE_TEST "Enable GoogleTest" ON)
 add_compile_definitions(PRINT_DEBUG_LOG)
 
 if(WIN32)
@@ -28,7 +29,11 @@ endif()
 # Set the installation directory
 SET(CMAKE_INSTALL_PREFIX "${PROJECT_BINARY_DIR}/out/${PROJECT_NAME}-${CMAKE_BUILD_TYPE}")
 
-# include_directories(include)
+if(ENABLE_TEST)
+  include(CTest)
+  find_package(GTest REQUIRED)
+  include(GoogleTest)
+endif()
 
 add_subdirectory(src)
 

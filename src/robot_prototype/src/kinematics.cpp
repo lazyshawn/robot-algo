@@ -225,7 +225,7 @@ std::vector<double> get_nearest_joint_state(const std::vector<std::vector<double
   }
 
   // 计算每一组关节状态到目标位置需要转动的角度
-  std::vector<double> manhatonDist(numJoint, std::numeric_limits<double>::infinity());
+  std::vector<double> manhatonDist(jointStack.size(), std::numeric_limits<double>::infinity());
   for (size_t i=0; i<jointStack.size(); ++i) {
     double tmp = 0.0;
     for (size_t j=0; j<numJoint; ++j) {
@@ -244,4 +244,13 @@ std::vector<double> get_nearest_joint_state(const std::vector<std::vector<double
     }
   }
   return jointStack[idx];
+}
+
+bool satisfy_joint_limit(const std::vector<double>& joint, const std::vector<std::vector<double>>& interval) {
+  for (size_t i=0; i<joint.size(); ++i) {
+    if (joint[i] < interval[i][0] || joint[i] > interval[i][1]) {
+      return false;
+    }
+  }
+  return true;
 }

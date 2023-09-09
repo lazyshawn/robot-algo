@@ -336,21 +336,21 @@ void qkhull::constractNewFace(ptrVertex pVertex, BorderEdgeMap& borderEdgeM, Fac
   }
 }
 
-void qkhull::allocOuterSet(VertexList& vertexList, FaceList& faceList) {
-  // 将每个顶点分配到一个表面的外部点集
-  for (VertexIterator iteVtx = vertexList.begin(); iteVtx != vertexList.end(); ++iteVtx) {
-    for (FaceIterator iteFace = faceList.begin(); iteFace != faceList.end(); ++iteFace) {
-      if ((*iteFace)->isAbove(*iteVtx)) {
-        ptrVertex tmpVtx = std::make_shared<Vertex>();
-        tmpVtx = (*iteVtx);
-        (*iteFace)->pOuterSet->vertexList.emplace_back((tmpVtx));
-        break;
-      }
-    }
-  }
-  // clear vertexList
-  vertexList.clear();
-}
+// void qkhull::allocOuterSet(VertexList& vertexList, FaceList& faceList) {
+//   // 将每个顶点分配到一个表面的外部点集
+//   for (VertexIterator iteVtx = vertexList.begin(); iteVtx != vertexList.end(); ++iteVtx) {
+//     for (FaceIterator iteFace = faceList.begin(); iteFace != faceList.end(); ++iteFace) {
+//       if ((*iteFace)->isAbove(*iteVtx)) {
+//         ptrVertex tmpVtx = std::make_shared<Vertex>();
+//         tmpVtx = (*iteVtx);
+//         (*iteFace)->pOuterSet->vertexList.emplace_back((tmpVtx));
+//         break;
+//       }
+//     }
+//   }
+//   // clear vertexList
+//   vertexList.clear();
+// }
 
 void qkhull::removeVisibleFace(FaceList& listPendFace, FaceList& listFinishFace) {
   FaceIterator iteTmpF;

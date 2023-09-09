@@ -39,3 +39,19 @@ install(TARGETS ${robot_prototype_libs} EXPORT RobotAlgoTargets
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
+
+
+###############################################################################
+# Build test
+###############################################################################
+if(ENABLE_TEST)
+  # kinematics
+  add_executable(test_kinematics
+    test/test_kinematics.cpp
+  )
+  target_link_libraries(test_kinematics PUBLIC
+    GTest::gtest GTest::gtest_main
+    robot_prototype
+  )
+  gtest_discover_tests(test_kinematics WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+endif()

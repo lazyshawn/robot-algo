@@ -38,6 +38,10 @@ bool RobotBase::load_config(std::string fname) {
   for (size_t i=0; i<numJoint; ++i) {
     jointLimit[i] = {lowerJoint[i]*M_PI/180, upperJoint[i]*M_PI/180};
   }
+  if (jointCouple) {
+    jointLimit[2][0] += jointLimit[1][0];
+    jointLimit[2][1] += jointLimit[1][1];
+  }
 
   // * 读取 TCP 位姿
   if (auto cfg = get_json_field(config, "end-effector"); cfg) {
@@ -111,6 +115,7 @@ std::optional<std::vector<std::vector<double>>> RobotBase::solve_inverse_kinemat
   // 根据关节限位过滤不合理的构型
   std::vector<std::vector<double>> equSol;
   for (size_t i=0; i<solSet.size(); ++i) {
+    // 获取等价的关节状态
     std::vector<std::vector<double>> tmp = get_equivalent_joint_state(solSet[i], jointLimit);
     equSol.insert(equSol.end(), tmp.begin(), tmp.end());
   }

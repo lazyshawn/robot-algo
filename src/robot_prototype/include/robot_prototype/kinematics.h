@@ -52,3 +52,10 @@ std::vector<std::vector<double>> get_equivalent_joint_state(const std::vector<do
 * @param : goal - 目标关节角
 */
 std::vector<double> get_nearest_joint_state(const std::vector<std::vector<double>>& jointStack, const std::vector<double>& goal = std::vector<double>());
+
+/* 
+* @brief : 检查关节状态是否在限位区间内
+* @param : joint - 待检测的关节状态
+* @param : interval - 关节限位区间
+*/
+bool satisfy_joint_limit(const std::vector<double>& joint, const std::vector<std::vector<double>>& interval);
