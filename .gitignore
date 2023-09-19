@@ -1,7 +1,10 @@
-build/*
-compile_commands.json
-lib/*
 .cache
-.vs
+compile_commands.json
+build
+
+lib
 out
 data
+
+.vs
+CMakeSettings.json

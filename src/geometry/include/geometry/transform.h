@@ -4,6 +4,9 @@
 #include <eigen3/unsupported/Eigen/MatrixFunctions>
 
 #include "algebra.h"
+#ifndef M_PI
+constexpr double M_PI = 3.1415926535897932384626433832795028841971693993751058209;
+#endif
 
 /* 变量说明
 * @运动旋量(twist): [v,w];

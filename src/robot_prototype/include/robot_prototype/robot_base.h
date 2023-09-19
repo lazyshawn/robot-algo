@@ -1,7 +1,9 @@
 #pragma once
 
+#include <nlohmann/json.hpp>
+#include <fstream>
+
 #include "robot_prototype/kinematics.h"
-#include "user_interface/user_interface.h"
 
 class RobotBase {
 public:

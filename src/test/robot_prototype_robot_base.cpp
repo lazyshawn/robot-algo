@@ -20,20 +20,6 @@ int main(int argc, char** argv) {
   }
 
   kinematics();
-  // std::vector<double> joint{10,20,30,40,50,60};
-  // for (size_t i=0; i<joint.size(); ++i) {
-  //   joint[i] *= M_PI/180;
-  // }
-  //
-  // auto jointStack = get_equivalent_joint_state(joint, robot.jointLimit);
-  // if (jointStack) {
-  //   for (auto jnt : jointStack.value()) {
-  //     for (size_t i=0; i<jnt.size(); ++i) {
-  //       std::cout << jnt[i]*180/M_PI << ", ";
-  //     }
-  //     std::cout << std::endl;
-  //   }
-  // }
 
   return 0;
 }
@@ -57,7 +43,8 @@ void calc() {
 void kinematics() {
   // 求解正运动学
   // 实际走的
-  std::vector<double> theta({17.1239, 71.083, -65.29274, 0, -24.7072, -17.1239});
+  // std::vector<double> theta({17.1239, 71.083, -65.29274, 0, -24.7072, -17.1239});
+  std::vector<double> theta({-5.22959, 72.9898, -24.5464, -0, -65.4536, 95.2396});
   // std::vector<double> theta({-5.719, 36.739, -40.95, 0, -49.053, -72.278});
   // std::vector<double> theta({-5.719, 36.739, -4.211, 0, -49.053, -72.278});
   // std::vector<double> theta({-2.198, 36.871, -40.791, 0, -49.212, -73.303});
@@ -70,14 +57,14 @@ void kinematics() {
     theta[i] = theta[i] * pi / 180;
   }
   std::cout << std::endl;
-  Eigen::Isometry3d tran = robot.solve_forward_kinematics(theta);
-  std::cout << "\nM: \n" << tran.matrix() << std::endl;
 
 
   // 求解逆运动学
   std::vector<std::vector<double>> ikSol;
-  tran.linear() = Eigen::Matrix3d({{0,0,1}, {0,1,0}, {-1,0,0}});
-  tran.translation() = Eigen::Vector3d(2274.1, 700.6, -282);
+  // tran.linear() = Eigen::Matrix3d({{0,0,1}, {0,1,0}, {-1,0,0}});
+  // tran.translation() = Eigen::Vector3d(2274.1, 700.6, -282);
+  Eigen::Isometry3d tran = robot.solve_forward_kinematics(theta);
+  std::cout << "\nM: \n" << tran.matrix() << "\n" << std::endl;
   if (auto opt = robot.solve_inverse_kinematics(tran); !opt) {
     std::cout << "No inverse kinematics solution." << std::endl;
     return;
@@ -90,7 +77,7 @@ void kinematics() {
       std::cout << ikSol[i][j]*180/pi << ", ";
     }
     std::cout << std::endl;
-    // std::cout << robot.solve_forward_kinematics(ikSol[i]).matrix() << "\n" << std::endl;
+    std::cout << robot.solve_forward_kinematics(ikSol[i]).matrix() << "\n" << std::endl;
   }
 
 }
