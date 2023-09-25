@@ -1,10 +1,6 @@
 cmake_minimum_required(VERSION 3.15)
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/cmake")
-if(PROJECT_IS_TOP_LEVEL)
-  include(TopCmakeConfig)
-else()
-  set(EXPORT_CMAKE_PACKAGE OFF)
-endif()
+include(TopCmakeConfig)
 
 project(RobotAlgo VERSION 1.0.0)
 
