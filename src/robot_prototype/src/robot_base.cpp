@@ -41,7 +41,12 @@ bool RobotBase::load_config(std::string fname) {
   Eigen::Isometry3d m0;
   m0.translation() = Eigen::Vector3d(config["end-effector"]["position"].get<std::vector<double>>().data());
   std::vector<double> xyzw = config["end-effector"]["quaternion"].get<std::vector<double>>();
-  m0.linear() = Eigen::Quaterniond(xyzw[0], xyzw[1], xyzw[2], xyzw[3]).matrix();
+  Eigen::Quaterniond tmpQua(xyzw[0], xyzw[1], xyzw[2], xyzw[3]);
+  if (1 - tmpQua.norm() > 1e-9) {
+    printf("Warning: # loadjson(): poor precision of quaternion.\n");
+    tmpQua.normalize();
+  }
+  m0.linear() = tmpQua.matrix();
   M0.emplace_back(m0);
 
   // * 检查并获取关节数据
