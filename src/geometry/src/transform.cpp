@@ -104,7 +104,7 @@ std::optional<double> pk_subproblem_1(Eigen::Vector<double,6> twist, Eigen::Vect
   Eigen::Vector3d up = u - w*w.transpose()*u, vp = v - w*w.transpose()*v;
 
   // 解的存在性条件
-  if (std::fabs(w.dot(u) - w.dot(v)) > 1e-8 || std::fabs(up.norm() - vp.norm()) > 1e-8) {
+  if (std::fabs(w.dot(u) - w.dot(v)) > 1e-7 || std::fabs(up.norm() - vp.norm()) > 1e-7) {
     printf("Error! # pk_subproblem_1(): %.9f, %.9f. ", std::fabs(w.dot(u) - w.dot(v)), std::fabs(up.norm() - vp.norm()));
     return std::nullopt;
   }

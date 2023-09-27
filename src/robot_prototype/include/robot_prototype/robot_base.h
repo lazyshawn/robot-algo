@@ -44,7 +44,7 @@ public:
   * @param : eeIdx - 末端执行器序号
   * @return: 末端执行器位姿信息
   */
-  virtual std::optional<std::vector<std::vector<double>>> solve_inverse_kinematics(Eigen::Isometry3d pose, size_t eeIdx = 0) const;
+  virtual std::optional<std::vector<std::vector<double>>> solve_inverse_kinematics(const Eigen::Isometry3d &pose, const std::vector<double> &initJoint = {}, size_t eeIdx = 0) const;
 
   // 驱动中添加机械臂控制程序
   // virtual void read_robot_status(std::vector<double>& theta);

@@ -83,7 +83,10 @@ Eigen::Isometry3d RobotBase::solve_forward_kinematics(std::vector<double> theta,
   return forward_kinematics(jointAxis, theta, M0[eeIdx]);
 }
 
-std::optional<std::vector<std::vector<double>>> RobotBase::solve_inverse_kinematics(Eigen::Isometry3d pose, size_t eeIdx) const {
+std::optional<std::vector<std::vector<double>>>
+RobotBase::solve_inverse_kinematics(const Eigen::Isometry3d &pose,
+                                    const std::vector<double> &initJoint,
+                                    size_t eeIdx) const {
   std::vector<std::vector<double>> solSet;
   // 获取所有不同构型的逆解
   if (auto opt = inverse_kinematics_elbow(jointAxis, pose, M0[eeIdx]); opt) {
@@ -117,7 +120,11 @@ std::optional<std::vector<std::vector<double>>> RobotBase::solve_inverse_kinemat
   }
 
   // 计算到零位最近的关节状态
-  std::vector<double> sol = get_nearest_joint_state(equSol);
+  std::vector<double> preJoint = initJoint;
+  if (preJoint.size() == 0) {
+    preJoint = std::vector<double>(6, 0.0);
+  }
+  std::vector<double> sol = get_nearest_joint_state(equSol, preJoint);
 
   return std::vector<std::vector<double>>({sol});
 }
