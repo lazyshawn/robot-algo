@@ -2,6 +2,7 @@
 
 #include <optional>
 #include <eigen3/unsupported/Eigen/MatrixFunctions>
+#include <map>
 
 #include "algebra.h"
 #ifndef M_PI
@@ -35,6 +36,7 @@ Eigen::Matrix4d liese3(Eigen::Vector<double,6> twist);
 * @return: vec 的反对称矩阵
 */
 Eigen::Matrix3d lieso3(Eigen::Vector3d vec);
+Eigen::Matrix3d lieSO3(Eigen::Vector3d vec);
 
 /* 
 * @brief : twist * theta -> SE(3)
@@ -84,4 +86,71 @@ std::optional<double> pk_subproblem_1(Eigen::Vector<double,6> twist, Eigen::Vect
 std::optional<std::vector<std::vector<double>>> pk_subproblem_2(Eigen::Vector<double,6> twist1, Eigen::Vector<double,6> twist2, Eigen::Vector3d p, Eigen::Vector3d q);
 // Rotation to a given distance: |[twist]p - q| = d
 std::optional<std::vector<double>> pk_subproblem_3(Eigen::Vector<double,6> twist, Eigen::Vector3d p, Eigen::Vector3d q, double distance);
+
+/* 
+* @brief : canonical subproblems
+* @param : 
+* @return: 
+* @ref   : "Canonical subproblems for Robot Inverse Kinematics", Alexander J. Elias
+* @Todos : 共线判断
+*/
+// min|h^T R(k,q) p - d|: Circle and plane, 最小化旋转后的投影
+std::vector<double> canonical_subproblem_4(Eigen::Vector3d p, Eigen::Vector3d k, Eigen::Vector3d h, double d);
+bool verify_canonical_subproblem_4(Eigen::Vector3d p, Eigen::Vector3d k, Eigen::Vector3d h, double d, double q);
+
+// min|R(k,q) p1 - p2|: Circle and point, 最小化旋转后的距离
+double canonical_subproblem_1(Eigen::Vector3d p1, Eigen::Vector3d k, Eigen::Vector3d p2);
+bool verify_canonical_subproblem_1(Eigen::Vector3d p1, Eigen::Vector3d k, Eigen::Vector3d p2, double q);
+
+// min|R(k1,q1) p1 - R(k2,q2)p2|: Two circles, 最小化两点旋转的差
+std::vector<std::vector<double>> canonical_subproblem_2(Eigen::Vector3d p1, Eigen::Vector3d k1, Eigen::Vector3d p2, Eigen::Vector3d k2);
+bool verify_canonical_subproblem_2(Eigen::Vector3d p1, Eigen::Vector3d k1, Eigen::Vector3d p2, Eigen::Vector3d k2, double q1, double q2);
+
+// min| ||R(k,q)p1 - p2|| - d |: Circle and sphere, 最小化旋转后到球面的距离
+std::vector<double> canonical_subproblem_3(Eigen::Vector3d p1, Eigen::Vector3d k, Eigen::Vector3d p2, double d);
+bool verify_canonical_subproblem_3(Eigen::Vector3d p1, Eigen::Vector3d k, Eigen::Vector3d p2, double d, double q);
+
+// h1^T R(k1,q1) p1 + h2^T R(k2,q2) p2 = d1
+// h3^T R(k3,q3) p3 + h4^T R(k4,q4) p4 = d2
+std::vector<std::vector<double>> canonical_subproblem_6(
+    Eigen::Vector3d p1, Eigen::Vector3d k1, Eigen::Vector3d h1,
+    Eigen::Vector3d p2, Eigen::Vector3d k2, Eigen::Vector3d h2, double d1,
+    Eigen::Vector3d p3, Eigen::Vector3d k3, Eigen::Vector3d h3,
+    Eigen::Vector3d p4, Eigen::Vector3d k4, Eigen::Vector3d h4, double d2);
+
+/* 
+* @brief : 判断给定系数的二次型是否表示一个椭圆
+* @param : k - [1,x,y,x2,xy,y] 的系数, y 的系数归一
+* @return: true / false
+*/
+bool is_ellipse(const std::vector<double>& k);
+
+/* 
+* @brief : 查找两个椭圆的交点
+* @param : k1 - 椭圆 1 的二次型系数, k2 - 椭圆 2 的二次型系数
+* @return: 
+*/
+std::vector<std::vector<double>> find_intersection_of_ellipses(const std::vector<double>& a, const std::vector<double>& b);
+
+/* 
+* @brief : 一元二次方程求根公式
+* @param : k - [1,x,x2] 的系数
+* @return: <root, multiplicity>
+*/
+std::map<double, int> solve_quadratic_equation(const std::vector<double>& k);
+
+/* 
+* @brief : 一元三次方程求根公式
+* @param : k - [1,x,x2,x3] 的系数
+* @return: <root, multiplicity>
+*/
+std::map<double, int> solve_cubic_equation(const std::vector<double>& k);
+
+/* 
+* @brief : 一元四次方程求根公式
+* @param : k - [1,x,x2,x3,x4] 的系数
+* @return: <root, multiplicity>
+* @ref   : https://en.wikipedia.org/wiki/Quartic_equation
+*/
+std::map<double, int> solve_quartic_equation(const std::vector<double>& k);
 

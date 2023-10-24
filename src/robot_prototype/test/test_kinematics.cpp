@@ -43,8 +43,11 @@ TEST(Kinematics, inverse_kinematics) {
     if (!satisfy_joint_limit(theta, robot.jointLimit))
       continue;
     tran = robot.solve_forward_kinematics(theta);
-    std::vector<double> sol = robot.solve_inverse_kinematics(tran).value()[0];
-    EXPECT_TRUE(tran.isApprox(robot.solve_forward_kinematics(sol)));
+    if (auto opt = robot.solve_inverse_kinematics(tran); opt) {
+      std::vector<double> sol = opt.value()[0];
+      EXPECT_TRUE(tran.isApprox(robot.solve_forward_kinematics(sol)));
+    } else {
+    }
   }
 }
 

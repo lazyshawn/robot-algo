@@ -31,3 +31,7 @@ Eigen::Matrix3d construct_unit_orthogonal_basis(Eigen::Vector3d vec) {
   basis << vec, ortho, vec.cross(ortho);
   return basis;
 }
+
+bool is_near_zero(double value, double ellipse) {
+  return fabs(value) < ellipse;
+}

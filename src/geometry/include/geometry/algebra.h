@@ -27,6 +27,14 @@ void sort_along_direction(std::vector<Eigen::Vector3d>& points, Eigen::Vector3d 
 Eigen::Matrix3d construct_unit_orthogonal_basis(Eigen::Vector3d vec);
 
 /* 
+* @brief : 浮点数接近零
+* @param : value - 待判断的浮点数
+* @param : ellipse - 允许误差
+* @return: True, False
+*/
+bool is_near_zero(double value, double ellipse = 1e-15);
+
+/* 
 * @brief : 主成分分析
 * @param : points - n 个数据点坐标
 * @param : axis - 主轴方向

@@ -1,5 +1,4 @@
 #include "robot_prototype/kinematics.h"
-#include <iostream>
 
 Eigen::Isometry3d serial_transfrom(const std::vector<Eigen::Vector<double, 6>>& jointAxis, const std::vector<double>& theta, size_t begIdx, size_t endIdx) {
   // 将默认终止序号设为最后一个关节轴序号
