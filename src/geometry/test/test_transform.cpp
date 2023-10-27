@@ -1,9 +1,34 @@
+/**
+  * @file     	sensor.c
+  * @author   	JonesLee
+  * @email   	Jones_Lee3@163.com
+  * @version	V4.01
+  * @date    	07-DEC-2017
+  * @license  	GNU General Public License (GPL)  
+  * @brief   	Universal Synchronous/Asynchronous Receiver/Transmitter 
+  * @detail		detail
+  * @attention
+  *  This file is part of OST.                                                  \n                                                                  
+  *  This program is free software; you can redistribute it and/or modify 		\n     
+  *  it under the terms of the GNU General Public License version 3 as 		    \n   
+  *  published by the Free Software Foundation.                               	\n 
+  *  You should have received a copy of the GNU General Public License   		\n      
+  *  along with OST. If not, see <http://www.gnu.org/licenses/>.       			\n  
+  *  Unless required by applicable law or agreed to in writing, software       	\n
+  *  distributed under the License is distributed on an "AS IS" BASIS,         	\n
+  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  	\n
+  *  See the License for the specific language governing permissions and     	\n  
+  *  limitations under the License.
+  *
+  * @htmlonly 
+  * <span style="font-weight: bold">History</span> 
+  * @endhtmlonly 
+  * Version|Auther|Date|Describe
+  * ------|----|------|-------- 
+  * V3.3|Jones Lee|07-DEC-2017|Create File
+  * <h2><center>&copy;COPYRIGHT 2017 WELLCASA All Rights Reserved.</center></h2>
+  */
 #include <gtest/gtest.h>
-extern "C" {
-  #include <luajit-2.1/lua.h>
-  #include <luajit-2.1/lualib.h>
-  #include <luajit-2.1/lauxlib.h>
-}
 
 #include "geometry/transform.h"
 #include "user_interface/user_interface.h"
@@ -136,10 +161,6 @@ TEST(SolveEllipse, solve_quartic_equation) {
 }
 
 int main(int argc, char** argv) {
-  lua_State *L = luaL_newstate();
-  luaL_openlibs(L);
-  int retLoad = luaL_loadfile(L, "test.lua");
-
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }
