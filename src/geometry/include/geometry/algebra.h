@@ -44,6 +44,16 @@ Eigen::Matrix3d construct_unit_orthogonal_basis(Eigen::Vector3d vec);
 bool is_near_zero(double value, double ellipse = 1e-15);
 
 /**
+* @brief  最小二乘拟合空间圆弧
+* @param  samples  采样点
+* @param  [out] center 拟合的圆心坐标
+* @param  relErr 采样点到圆心的距离与半径的平均误差(absErr)与半径的比值
+* @return 拟合圆的半径，当 relErr 大于阈值时返回结果为负
+* @see    https://blog.csdn.net/weixin_46581517/article/details/105178304
+*/
+double circle_fitting(const std::vector<Eigen::Vector3d>& samples, Eigen::Vector3d& center, double relErr = 1e-2);
+
+/**
 * @brief  主成分分析
 * @param  points 数据点坐标
 * @param  com   质心坐标

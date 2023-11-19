@@ -51,6 +51,37 @@ TEST(Kinematics, inverse_kinematics) {
   }
 }
 
+TEST(algebra, circle_fitting) {
+  size_t num = 10;
+  // 随机误差
+  Eigen::MatrixXd randMat = get_random_matrix(3, num, 0, 0.001);
+  std::vector<double> randNum = get_uniform_double(num+2);
+
+  double radius = randNum[num]*10;
+  Eigen::Vector3d center(1,2,3), axis = get_random_matrix(3,1);
+  axis.normalize();
+
+  std::vector<Eigen::Vector3d> samples;
+  for (size_t i=0; i<num; ++i) {
+    double theta = randNum[i]*2*M_PI;
+    // xoy 平面中特定圆上一个点
+    Eigen::Vector3d pnt(sin(theta)*radius, cos(theta)*radius, 0);
+    // 绕轴旋转 + 平移
+    pnt = (Eigen::AngleAxisd(randNum[2]*2*M_PI, axis)*pnt).eval();
+    pnt += center;
+    // 随机误差
+    pnt += randMat.col(i);
+    samples.push_back(pnt);
+  }
+  Eigen::Vector3d fitCenter;
+  double fitRadius = circle_fitting(samples, fitCenter);
+  std::cout << "raw data:" << std::endl;
+  std::cout << "r = " << radius << ", center = " << center.transpose() << std::endl;
+  std::cout << "fit data:" << std::endl;
+  std::cout << "r = " << fitRadius << ", center = " << fitCenter.transpose() << std::endl;
+  ASSERT_TRUE((radius-fitRadius)/radius < 1e-2);
+}
+
 int main(int argc, char** argv) {
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();

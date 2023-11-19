@@ -34,6 +34,9 @@ public:
   size_t port;
   //! 关节耦合标志: 上游关节的运动会累加到下游关节
   bool jointCouple = false;
+  //! 是否已经加载配置文件
+  bool isValid = false;
+  uint8_t configType;
 
 public:
   /**
@@ -51,11 +54,23 @@ public:
   Eigen::Isometry3d solve_forward_kinematics(std::vector<double> theta, size_t eeIdx = 0) const;
   /**
   * @brief  肘形机械臂逆运动学 - Inverse kinematics of elbow manipulator
-  * @param  [in] theta 关节角 (rad)
-  * @param  [in] eeIdx 末端执行器序号
-  * @return 末端执行器位姿信息
+  * @param  pose 齐次转换矩阵
+  * @param  initJoint 初始关节角
+  * @param  eeIdx 末端执行器的序号
+  * @return 距离初始关节角最近的逆解
   */
   virtual std::optional<std::vector<std::vector<double>>> solve_inverse_kinematics(const Eigen::Isometry3d &pose, const std::vector<double> &initJoint = {}, size_t eeIdx = 0) const;
+
+  /**
+  * @brief  肘形机械臂的所有逆运动学解
+  * @param  pose 齐次转换矩阵
+  * @param  eeIdx 末端执行器的序号
+  * @return 所有合理的逆运动学解
+  */
+  std::vector<std::vector<double>> get_all_ik_solutions(const Eigen::Isometry3d &pose, size_t eeIdx = 0);
+
+  // 1. 距离初始关节角最近的解
+  // 1. 满足特定构型的解 elbow_on, wrist_inverse, shoulder_right, etc.
 
   // 驱动中添加机械臂控制程序
   // virtual void read_robot_status(std::vector<double>& theta);

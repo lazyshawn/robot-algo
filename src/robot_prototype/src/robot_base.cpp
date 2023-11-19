@@ -70,8 +70,8 @@ bool RobotBase::load_config(std::string fname) {
   for (size_t i=0; i<numJoint; ++i) {
     axis.row(i) = jointAxis[i];
   }
-  // std::cout << "Joint Axis:\n" << axis << std::endl;
 
+  isValid = true;
   return true;
 }
 
@@ -118,6 +118,7 @@ RobotBase::solve_inverse_kinematics(const Eigen::Isometry3d &pose,
     printf("Error: # solve_inverse_kinematics(): no solution exist in jointLimit.\n");
     return std::nullopt;
   }
+  return equSol;
 
   // 计算到零位最近的关节状态
   std::vector<double> preJoint = initJoint;
@@ -127,4 +128,10 @@ RobotBase::solve_inverse_kinematics(const Eigen::Isometry3d &pose,
   std::vector<double> sol = get_nearest_joint_state(equSol, preJoint);
 
   return std::vector<std::vector<double>>({sol});
+}
+
+std::vector<std::vector<double>> RobotBase::get_all_ik_solutions(const Eigen::Isometry3d &pose, size_t eeIdx) {
+  std::vector<std::vector<double>> solSet;
+
+  return solSet;
 }
