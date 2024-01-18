@@ -55,3 +55,13 @@ if(ENABLE_TEST)
   )
   gtest_discover_tests(test_kinematics WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 endif()
+
+###############################################################################
+# Build example
+###############################################################################
+add_executable(robotic_system
+  ./example/robotic_system_base.cpp
+)
+target_include_directories(robotic_system PUBLIC
+  ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
