@@ -91,4 +91,7 @@ add_executable(discrete_trajectory_decomposition
 target_include_directories(discrete_trajectory_decomposition PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
-target_link_libraries(discrete_trajectory_decomposition PUBLIC curve_decomposition)
+target_link_libraries(discrete_trajectory_decomposition PUBLIC
+  curve_decomposition
+  user_interface
+)

@@ -1,6 +1,6 @@
 #include "path_planning/curve_decomposition.h"
 
-Eigen::Vector3d circular_arc_fitting(Eigen::Vector3d beg, Eigen::Vector3d mid, Eigen::Vector3d end) {
+Eigen::Vector3d triangular_circumcenter(Eigen::Vector3d beg, Eigen::Vector3d mid, Eigen::Vector3d end) {
   Eigen::Vector3d a = beg - mid, b = end - mid;
   if (a.cross(b).squaredNorm() < 1e-12) {
     double inf = std::numeric_limits<double>::max();
@@ -136,18 +136,18 @@ std::vector<size_t> maximal_blurred_segment_split(const std::vector<Eigen::Vecto
   return dpIdx;
 }
 
-std::vector<Eigen::Vector3d> convert_into_tangent_space(const std::vector<Eigen::Vector3d>& pntlist, const std::vector<size_t>& dpIdx) {
+std::vector<Eigen::Vector3d> convert_into_tangent_space(const std::vector<Eigen::Vector3d>& pntList, const std::vector<size_t>& dpIdx) {
   std::vector<Eigen::Vector3d> midPntCurve(dpIdx.size()-1);
   std::vector<Eigen::Vector3d> mpc(dpIdx.size()-1);
 
   // 初值
-  double length = (pntlist[dpIdx[1]] - pntlist[dpIdx[0]]).norm()/2, theta = 0.0;
-  Eigen::Vector3d posDir = (pntlist[dpIdx[1]] - pntlist[dpIdx[0]]).cross(pntlist[dpIdx[2]] - pntlist[dpIdx[1]]).normalized();
+  double length = (pntList[dpIdx[1]] - pntList[dpIdx[0]]).norm()/2, theta = 0.0;
+  Eigen::Vector3d posDir = (pntList[dpIdx[1]] - pntList[dpIdx[0]]).cross(pntList[dpIdx[2]] - pntList[dpIdx[1]]).normalized();
   mpc[0] = {length, 0, 0};
 
   for (size_t i=1; i<dpIdx.size()-1; ++i) {
-    Eigen::Vector3d pre = pntlist[dpIdx[i]] - pntlist[dpIdx[i-1]];
-    Eigen::Vector3d cur = pntlist[dpIdx[i+1]] - pntlist[dpIdx[i]];
+    Eigen::Vector3d pre = pntList[dpIdx[i]] - pntList[dpIdx[i-1]];
+    Eigen::Vector3d cur = pntList[dpIdx[i+1]] - pntList[dpIdx[i]];
     double curTheta = std::acos(pre.dot(cur) / pre.norm() / cur.norm());
     curTheta *= posDir.dot(pre.cross(cur)) > 0 ? 1 : -1;
     theta += curTheta;
@@ -172,12 +172,11 @@ std::vector<std::pair<size_t, double>> arc_approximation(const std::vector<Eigen
 
     // 遍历中间点
     for (size_t j=sepIdx[i]+1; j<sepIdx[i+1]-1; ++j) {
-      Eigen::Vector3d tmpCenter = circular_arc_fitting(begPnt, pntList[j], endPnt);
+      Eigen::Vector3d tmpCenter = triangular_circumcenter(begPnt, pntList[j], endPnt);
       double tmpRadius = (begPnt - tmpCenter).norm(), maxErr = 0.0;
 
       // 计算误差
       for (size_t k=sepIdx[i]+1; k<sepIdx[i+1]-1; ++k) {
-        // double err = std::fabs((pntList[k] - tmpCenter).squaredNorm() - tmpRadius*tmpRadius);
         double err = std::fabs((pntList[k] - tmpCenter).norm() - tmpRadius);
         maxErr = std::max(err, maxErr);
       }
@@ -196,7 +195,16 @@ std::vector<std::pair<size_t, double>> arc_approximation(const std::vector<Eigen
   return result;
 }
 
+DiscreteTrajectory::DiscreteTrajectory(){
+  this->clear();
+}
+
+DiscreteTrajectory::DiscreteTrajectory(const std::vector<Eigen::Vector3d>& points){
+  load_trajectory(points);
+}
+
 void DiscreteTrajectory::calc_trajectory_pose(Eigen::Vector3d upper) {
+  // Initialization
   radii = std::vector<double>(sepIdx.size() - 1);
   midIdx = std::vector<size_t>(sepIdx.size() - 1);
   pntPose = std::vector<Eigen::Isometry3d>(sepIdx.size());
@@ -218,7 +226,7 @@ void DiscreteTrajectory::calc_trajectory_pose(Eigen::Vector3d upper) {
     radii[i] = pair[i].second;
 
     Eigen::Vector3d begPnt = pntList[sepIdx[i]], endPnt = pntList[sepIdx[i+1]];
-    Eigen::Vector3d center = circular_arc_fitting(begPnt, pntList[midIdx[i]], endPnt);
+    Eigen::Vector3d center = triangular_circumcenter(begPnt, pntList[midIdx[i]], endPnt);
 
     // 轨迹终点的位姿
     a = endPnt - pntList[sepIdx[i+1]-1], r = center - endPnt;
@@ -236,7 +244,7 @@ void DiscreteTrajectory::calc_trajectory_pose(Eigen::Vector3d upper) {
   }
 
   // 第一个点的位姿
-  center = circular_arc_fitting(pntList[sepIdx[0]], pntList[midIdx[0]], pntList[sepIdx[1]]);
+  center = triangular_circumcenter(pntList[sepIdx[0]], pntList[midIdx[0]], pntList[sepIdx[1]]);
   a = pntList[sepIdx[0]+1] - pntList[sepIdx[0]], r = center - pntList[sepIdx[0]];
   d = r.cross(a.cross(r)).normalized(), n = upper.cross(d).cross(d).normalized(), o = d.cross(n);
   tran.linear() << o, d, n;
@@ -252,6 +260,17 @@ void DiscreteTrajectory::calc_trajectory_pose(Eigen::Vector3d upper) {
   }
 }
 
+void DiscreteTrajectory::load_trajectory(const std::vector<Eigen::Vector3d>& points) {
+  this->clear();
+
+  // Initialize pntList
+  pntList = std::vector<Eigen::Vector3d>(points.size());
+  // Copy points to pntList
+  for (size_t i=0; i<points.size(); ++i) {
+    pntList[i] = points[i];
+  }
+}
+
 void DiscreteTrajectory::perform_trajectory_decomposition(double linearErr, double curveErr) {
   // Blurred segment splition for midpoitn curve -> dominant points
   std::vector<size_t> dpIdx = maximal_blurred_segment_split(pntList, linearErr);
@@ -260,10 +279,20 @@ void DiscreteTrajectory::perform_trajectory_decomposition(double linearErr, doub
   // Blurred segment splition for midpoitn curve
   std::vector<size_t> idxList = maximal_blurred_segment_split(mpc, curveErr);
 
-  // 圆弧和直线段分隔点的索引
+  // Initialize sepIdx
   sepIdx = std::vector<size_t>(idxList.size(), dpIdx.back());
+  // 圆弧和直线段分隔点的索引
   for (size_t i=0; i<idxList.size()-1; ++i) {
     sepIdx[i] = dpIdx[idxList[i]];
   }
+}
+
+void DiscreteTrajectory::clear() {
+  pntList.clear();
+  pntPose.clear();
+  midPose.clear();
+  radii.clear();
+  sepIdx.clear();
+  midIdx.clear();
 }
 

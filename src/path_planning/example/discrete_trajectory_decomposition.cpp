@@ -11,6 +11,7 @@ const std::string dataPath = "data/curve_decomposition/";
 // 文件保存路径
 const std::string savePath = "build/data/curve_decomposition/";
 
+// 读取数据的文件名称
 std::string dataFile;
 // 数据点
 Eigen::MatrixXd pntMat;
