@@ -40,25 +40,34 @@ inverse_kinematics_elbow(const std::vector<Eigen::Vector<double,6>>& jointAxis, 
   std::vector<double> theta(6,0);
   // 所有解的集合
   std::vector<std::vector<double>> solSet;
+  // 临时存放多解的集合
   std::vector<std::vector<double>> tmpSet;
   solSet.reserve(8);
 
   // * e1 影响 pw 在 xoy 平面上的方向
-  theta[0] = atan2(-gPw[1], -gPw[0]);
-  solSet.push_back(theta);
-  // 理论上需要考虑折叠的情况，故有八组解
-  theta[0] = atan2(gPw[1], gPw[0]);
-  solSet.push_back(theta);
+  double dy = gPw[1], dx = gPw[0];
+  for (size_t i=0; i<2; ++i) {
+    theta[0] = atan2(dy, dx);
+    // 根据关节 1 的正方向修正旋转角度
+    if (jointAxis[0][5] < 0) theta[0] *= -1;
+    solSet.push_back(theta);
+    // 理论上需要考虑折叠的情况，故有八组解
+    dy *= -1; dx *= -1;
+  }
 
   // * e3: pw, pb 之间的距离仅取决与 e3
   tmpSet.clear();
   for (vvRIte ite=solSet.begin(); ite!=solSet.end(); ++ite) {
     if (auto opt = pk_subproblem_3(jointAxis[2], pw, pb, (gPw-lieSE3(jointAxis[0]*(*ite)[0])*pb).norm()); !opt) {
-      printf("# inverse_kinematics_elbow(): q3.\n");
+      printf("# inverse_kinematics_elbow(): q3, Loss 4 sols.\n");
       // 舍弃当前解
       solSet.erase(ite--);
     } else {
       (*ite)[2] = opt.value()[0];
+      if (opt.value().size() == 1) {
+        printf("# inverse_kinematics_elbow() : q3, equivalent sol, Loss 1 sol.\n");
+        continue;
+      }
       // 生成新的解
       theta = *ite;
       theta[2] = opt.value()[1];
@@ -70,7 +79,7 @@ inverse_kinematics_elbow(const std::vector<Eigen::Vector<double,6>>& jointAxis, 
   // * e2: 每一组 e1,e3 有一个对应的 e2
   for (vvRIte ite=solSet.begin(); ite!=solSet.end(); ++ite) {
     if (auto opt = pk_subproblem_1(jointAxis[1], lieSE3(jointAxis[2]*(*ite)[2])*pw, lieSE3(-jointAxis[0]*(*ite)[0])*gPw); !opt) {
-      printf("# inverse_kinematics_elbow(): q2.\n");
+      printf("# inverse_kinematics_elbow(): q2, Loss 2 sols.\n");
       // 舍弃当前解，用反向迭代器删除元素
       solSet.erase(ite--);
     } else {
@@ -84,12 +93,16 @@ inverse_kinematics_elbow(const std::vector<Eigen::Vector<double,6>>& jointAxis, 
     // g2 = [ie3][ie2][ie1]g1 = [e4][e5][e6]
     Eigen::Isometry3d g2 = lieSE3(-jointAxis[2]*(*ite)[2])*lieSE3(-jointAxis[1]*(*ite)[1])*lieSE3(-jointAxis[0]*(*ite)[0])*g1;
     if (auto opt = pk_subproblem_2(jointAxis[3], jointAxis[4], pe, g2*pe); !opt) {
-      printf("# inverse_kinematics_elbow(): q45.\n");
+      printf("# inverse_kinematics_elbow(): q45, Loss 2 sols.\n");
       // 舍弃当前解
       solSet.erase(ite--);
     } else {
       (*ite)[3] = opt.value()[0][0];
       (*ite)[4] = opt.value()[0][1];
+      if (opt.value().size() == 1) {
+        printf("# inverse_kinematics_elbow() : q45, equivalent sol, Loss 1 sol.\n");
+        continue;
+      }
       // 生成新的解
       theta = *ite;
       theta[3] = opt.value()[1][0];
@@ -139,7 +152,7 @@ bool wrap_joint(std::vector<double>& joint, const std::vector<std::vector<double
   return success;
 }
 
-std::optional<std::vector<std::vector<double>>> get_equivalent_joint_state(std::vector<double>& jointState, const std::vector<std::vector<double>>& interval) {
+std::vector<std::vector<double>> get_equivalent_joint_state(const std::vector<double>& jointState, const std::vector<std::vector<double>>& interval) {
   // 关节个数
   size_t num = jointState.size();
   // 返回的等价解
@@ -151,7 +164,7 @@ std::optional<std::vector<std::vector<double>>> get_equivalent_joint_state(std::
     // 检测关节角是否属于 [-2*PI, 2*PI]
     if (jointState[i] < -2*M_PI || jointState[i] > 2*M_PI) {
       printf("Error: #find_equivalent_joint_state() : theta[%zd] overrange. ", i);
-      return std::nullopt;
+      return ret;
     }
     double tmp = jointState[i];
     tmp += (tmp > 0) ? -2*M_PI : 2*M_PI;
@@ -169,7 +182,7 @@ std::optional<std::vector<std::vector<double>>> get_equivalent_joint_state(std::
     }
     // 如果当前关节角无法转换到关节限位区间内，则等价解不存在
     if (!opt.size()) {
-      return std::nullopt;
+      return ret;
     }
     option[i] = opt;
   }
@@ -200,3 +213,43 @@ std::optional<std::vector<std::vector<double>>> get_equivalent_joint_state(std::
   return ret;
 }
 
+std::vector<double> get_nearest_joint_state(const std::vector<std::vector<double>>& jointStack, const std::vector<double>& goal) {
+  if (!jointStack.size()) return std::vector<double>();
+  size_t numJoint = jointStack[0].size();
+
+  // 默认计算到零位的距离
+  std::vector<double> goalJoint = goal;
+  if (!goal.size()) {
+    goalJoint = std::vector<double>(numJoint, 0.0);
+  }
+
+  // 计算每一组关节状态到目标位置需要转动的角度
+  std::vector<double> manhatonDist(jointStack.size(), std::numeric_limits<double>::infinity());
+  for (size_t i=0; i<jointStack.size(); ++i) {
+    double tmp = 0.0;
+    for (size_t j=0; j<numJoint; ++j) {
+      tmp += std::fabs(jointStack[i][j] - goalJoint[j]);
+    }
+    manhatonDist[i] = tmp;
+  }
+
+  // 查找最近关节状态的序号
+  size_t idx = 0;
+  double minDist = std::numeric_limits<double>::infinity();
+  for (size_t i=0; i<jointStack.size(); ++i) {
+    if (manhatonDist[i] < minDist) {
+      minDist = manhatonDist[i];
+      idx = i;
+    }
+  }
+  return jointStack[idx];
+}
+
+bool satisfy_joint_limit(const std::vector<double>& joint, const std::vector<std::vector<double>>& interval) {
+  for (size_t i=0; i<joint.size(); ++i) {
+    if (joint[i] < interval[i][0] || joint[i] > interval[i][1]) {
+      return false;
+    }
+  }
+  return true;
+}

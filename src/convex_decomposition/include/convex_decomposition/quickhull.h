@@ -1,3 +1,9 @@
+/**
+* @file   quickhull.h
+* @brief  Quickhull
+*
+* 三维点集的 quickhull 算法
+*/
 #pragma once
 #include <eigen3/Eigen/Dense>
 #include <memory>
@@ -9,6 +15,9 @@
 #include "geometry/algebra.h"
 #include "geometry/geometry.h"
 
+/**
+* @brief  quickhull
+*/
 namespace qkhull {
   class Vertex;
   class Edge;
@@ -16,7 +25,7 @@ namespace qkhull {
   class OuterSet;
   class Hull;
 
-  // 顶点链表
+  //! 顶点链表
   typedef std::shared_ptr<Vertex> ptrVertex;
   typedef std::list<ptrVertex> VertexList;
   typedef VertexList::iterator VertexIterator;
@@ -31,8 +40,18 @@ namespace qkhull {
   typedef std::map<ptrVertex, ptrEdge> BorderEdgeMap;
   typedef BorderEdgeMap::iterator EdgeIterator;
 
-  enum class FaceStatus {notVisited, visible, border};
+  /**
+  * @brief  表面的可见性
+  */
+  enum class FaceStatus {
+    notVisited, /**< 不可见面 */
+    visible,    /**< 可见面 */
+    border      /**< 边界面 */
+  };
 
+  /**
+  * @brief  几何元素，点
+  */
   class Vertex {
     public:
       bool onHull = false;
@@ -47,6 +66,9 @@ namespace qkhull {
       void erase();
   };
 
+  /**
+  * @brief  几何元素，边
+  */
   class Edge {
     public:
       std::vector<ptrVertex> vertex = std::vector<ptrVertex>(2);
@@ -57,6 +79,9 @@ namespace qkhull {
       void setNeighbors(ptrFace unvisibleFace, ptrFace visibleFce);
   };
 
+  /**
+  * @brief  几何元素，三角形面
+  */
   class Face {
     public:
       // 三角形表面的三个顶点
@@ -88,6 +113,11 @@ namespace qkhull {
       bool onBorder();
   };
 
+  /**
+  * @brief  点集
+  *
+  * 用于表面上方的点
+  */
   class OuterSet {
     public:
       VertexList vertexList;
@@ -98,6 +128,9 @@ namespace qkhull {
       }
   };
 
+  /**
+  * @brief  凸包
+  */
   class Hull {
     public:
       VertexList vertex;
@@ -107,56 +140,64 @@ namespace qkhull {
       void init();
   };
 
-  /* 
-  * @brief : 快速凸包算法
-  * @param : set: 点集
-  * @return: 
-  * @ref   : https://zhuanlan.zhihu.com/p/166105080
+  /**
+  * @brief  快速凸包算法
+  * @param  set 点集
+  * @param  [out] cvxHull 凸包, 面集
+  * @see    https://zhuanlan.zhihu.com/p/166105080
   */
   void quickhull(const std::vector<Eigen::Vector3d>& set, FaceList& cvxHull);
-  /* 
-  * @brief : 初始化四面体
-  * @param : vertexList: 顶点链表
-  * @param : faceList: 面链表
+  /**
+  * @brief  初始化四面体，找尽可能大的四面体
+  * @param  [out] vertexList 四面体的顶点链表
+  * @param  [out] faceList 四面体的面链表
   */
   void initTetrahedron(VertexList& vertexList, FaceList& tetrahedron);
-  /* 
-  * @brief : 为平面分配外部点集
-  * @param : vertexList: 待分配的点集
-  * @param : face: 待分配的表面
+  /**
+  * @brief  为平面分配外部点集
+  * @param  vertexList 待分配的点集
+  * @param  face 待分配的表面
   */
   void allocOuterSet(VertexList& vertexList, FaceList& face);
-  /* 
-  * @func  : void deleteFace
-  * @brief : 
-  * @param : 
-  * @return: 
+  /**
+  * @brief  移除可见面
+  *
+  * 可见面一定不是凸包所含的面，故排除
+  *
+  * @param  listPendFace 待定面集的链表
+  * @param  listFinishFace 确定面集的链表
   */
   void removeVisibleFace(FaceList& listPendFace, FaceList& listFinishFace);
-  /* 
-  * @brief : 更新待定面集
-  * @param : 
-  * @return: 
+  /**
+  * @brief  更新待定面集
+  * @param  listNewF    新加入的面
+  * @param  listPendF   待定面集
+  * @param  listFinishF 确定面集
   */
   void updatePendFace(FaceList& listNewF, FaceList& listPendF, FaceList& listFinishF);
-  /* 
-  * @brief : 宽度优先搜索：找最远点的可见面集
-  * @param : furV: 最远点
-  * @param : pendF: 当前搜索面
-  * @param : visF: 可见面链表
-  * @param : 
+  /**
+  * @brief  找最远点的可见面集
+  *
+  * 宽度优先搜索，判断在最远点处每个面的可见性; 
+  * 可见面与不可见面的邻边为临界边
+  *
+  * @param  ptrFurV      最远点
+  * @param  ptrPendF     当前搜索面
+  * @param  listVisibleF 可见面链表
+  * @param  edgeM        临界边
   */
   void findVisibleFace(ptrVertex ptrFurV, ptrFace& ptrPendF, FaceList& listVisibleF, BorderEdgeMap& edgeM);
-  /* 
-  * @brief : 合并可见面的外部点集
-  * @param : 
-  * @return: 
+  /**
+  * @brief  合并可见面的外部点集
+  * @param  visFaceList 可见面
+  * @param  visOuterSet 可见面的所有外部点集
   */
   void gatherOuterSet(FaceList& visFaceList, VertexList& visOuterSet);
-  /* 
-  * @brief : 用最远点和临界边构建新的表面
-  * @param : 
-  * @return: 
+  /**
+  * @brief  用最远点和临界边构建新的表面
+  * @param  pVertex     最远点
+  * @param  borderEdgeM 临界边
+  * @param  newFaceL    新的表面
   */
   void constractNewFace(ptrVertex pVertex, BorderEdgeMap& borderEdgeM, FaceList& newFaceL);
 } // namespace qkhull

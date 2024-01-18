@@ -1,3 +1,7 @@
+/**
+* @file   genetic_algo.h
+* @brief  遗传算法
+*/
 #pragma once
 
 #include <algorithm>
@@ -19,6 +23,9 @@ std::vector<int> get_sequence_with_sum(int sum, int numPartion);
 
 void append_sequence(std::vector<std::vector<int>>& array, int numPartion);
 
+/**
+ * @brief  遗传算法中的个体
+ */
 class Indivisual {
 public:
   // 访问顺序
@@ -39,6 +46,9 @@ public:
   friend std::ostream &operator<<(std::ostream &output, const Indivisual &ind);
 };
 
+/**
+ * @brief  多旅行商规划模型
+ */
 class MTSPModel {
 public:
   int numCity, numSalemen;

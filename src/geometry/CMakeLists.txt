@@ -102,3 +102,22 @@ install(TARGETS ${geometry_libs} EXPORT RobotAlgoTargets
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
+
+
+###############################################################################
+# Build test
+###############################################################################
+if(ENABLE_TEST)
+  # geometry
+  add_executable(test_transform
+    test/test_transform.cpp
+  )
+  target_link_libraries(test_transform PUBLIC
+    GTest::gtest GTest::gtest_main
+    ${geometry_libs}
+    user_interface
+    luajit-5.1
+    # dl
+  )
+  gtest_discover_tests(test_transform WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+endif()

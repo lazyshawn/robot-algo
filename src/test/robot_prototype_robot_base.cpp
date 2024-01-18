@@ -4,7 +4,8 @@
 const double pi = 3.1415926535897932384626433832795028841971693993751058209;
 
 // std::string fname("data/config/fanuc_m20id25_scan.json");
-std::string fname("data/config/YASKAWA_GP_25.json");
+// std::string fname("data/config/KUKA_KR210_R2700_EXTRA.json");
+std::string fname("data/config/YASKAWA_GP_280L.json");
 RobotBase robot;
 
 void pk_problem();
@@ -19,32 +20,14 @@ int main(int argc, char** argv) {
   }
 
   kinematics();
-  // std::vector<double> joint{10,20,30,40,50,60};
-  // for (size_t i=0; i<joint.size(); ++i) {
-  //   joint[i] *= M_PI/180;
-  // }
-  //
-  // auto jointStack = get_equivalent_joint_state(joint, robot.jointLimit);
-  // if (jointStack) {
-  //   for (auto jnt : jointStack.value()) {
-  //     for (size_t i=0; i<jnt.size(); ++i) {
-  //       std::cout << jnt[i]*180/M_PI << ", ";
-  //     }
-  //     std::cout << std::endl;
-  //   }
-  // }
 
   return 0;
 }
 
 void calc() {
-  // double theta = -pi/8;
-  // Eigen::Quaterniond pre(0.717991389577189, -0.581413977297589, 0.297399432761697, -0.240831328711687);
-  // Eigen::Quaterniond aft(0.18024, 0.906127, 0.0746578, 0.37533);
-  // std::cout << aft*pre.inverse() << std::endl;
   Eigen::Matrix3d final({{-sqrt(2)/2,0,sqrt(2)/2}, {0,1,0}, {-sqrt(2)/2,0,-sqrt(2)/2}});
   Eigen::Matrix3d pre({{sqrt(2)/2,0,sqrt(2)/2}, {0,-1,0}, {sqrt(2)/2,0,-sqrt(2)/2}});
-  Eigen::AngleAxis rot(-pi/8, Eigen::Vector3d({1,0,0}));
+  Eigen::AngleAxis rot(-M_PI/8, Eigen::Vector3d({1,0,0}));
   Eigen::Matrix3d aft = rot*pre;
   // std::cout.precision(18);
   std::cout << "Quaterniond = \n" << Eigen::Quaterniond(aft) << std::endl;
@@ -55,20 +38,15 @@ void calc() {
                                           {-3.38596e-06, 1, 3.37904e-05},
                                           {-0.707071, 0, -0.707143}});
   std::cout << TargetFrame.matrix() << std::endl;
-
-  // std::cout << "pre = " << pre << std::endl;
-  // for (size_t i=0; i<9; ++i) {
-  //   double q = -pi/8/2 * (i+1);
-  //   Eigen::AngleAxis axis(q, Eigen::Vector3d(1,0,0));
-  //   std::cout << "Rot(x,-pi/" << 8*2/(i+1) << ") : " << axis*pre << std::endl;
-  // }
 }
 
 void kinematics() {
   // 求解正运动学
   // 实际走的
-  std::vector<double> theta({-5.719, 36.739, -40.95, 0, -49.053, -72.278});
+  // std::vector<double> theta({17.1239, 71.083, -65.29274, 0, -24.7072, -17.1239});
+  std::vector<double> theta({-25.0656, 2.85997, -43.6415, 125.922, 66.5106, -24.4094});
   // std::vector<double> theta({-5.719, 36.739, -40.95, 0, -49.053, -72.278});
+  // std::vector<double> theta({-5.719, 36.739, -4.211, 0, -49.053, -72.278});
   // std::vector<double> theta({-2.198, 36.871, -40.791, 0, -49.212, -73.303});
   // 应该走的
   // std::vector<double> theta({3.567,  48.680, -32.630, 0.047, -56.355, 152.630});
@@ -79,16 +57,14 @@ void kinematics() {
     theta[i] = theta[i] * pi / 180;
   }
   std::cout << std::endl;
-  Eigen::Isometry3d tran = robot.solve_forward_kinematics(theta);
-  std::cout << "\nM: \n" << tran.matrix() << std::endl;
-  // std::cout << "q: " << Eigen::Quaterniond(tran.linear()) << std::endl;
-  // Eigen::Matrix3d rotmat = tran.linear()*(robot.M0[0].linear().inverse());
-  // std::cout << "rotmat:\n" << rotmat << std::endl;
-  // std::cout << "\nM0 should be:\n" << rotmat.inverse()*final << std::endl;
 
 
   // 求解逆运动学
   std::vector<std::vector<double>> ikSol;
+  // tran.linear() = Eigen::Matrix3d({{0,0,1}, {0,1,0}, {-1,0,0}});
+  // tran.translation() = Eigen::Vector3d(2274.1, 700.6, -282);
+  Eigen::Isometry3d tran = robot.solve_forward_kinematics(theta);
+  std::cout << "\nM: \n" << tran.matrix() << "\n" << std::endl;
   if (auto opt = robot.solve_inverse_kinematics(tran); !opt) {
     std::cout << "No inverse kinematics solution." << std::endl;
     return;

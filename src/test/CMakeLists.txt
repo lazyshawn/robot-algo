@@ -61,13 +61,13 @@ target_link_libraries(test_probabilistic_roadmap PUBLIC
   user_interface
 )
 
-add_executable(test_transform
-  test_transform.cpp
-)
-target_link_libraries(test_transform PUBLIC
-  user_interface
-  transform
-)
+# add_executable(test_transform
+#   test_transform.cpp
+# )
+# target_link_libraries(test_transform PUBLIC
+#   user_interface
+#   transform
+# )
 
 add_executable(robot_prototype_robot_base
   robot_prototype_robot_base.cpp
