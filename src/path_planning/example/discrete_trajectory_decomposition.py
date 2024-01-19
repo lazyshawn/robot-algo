@@ -31,6 +31,9 @@ def plot_circle(ax, p1, p2, p3):
 
     a = p1 - p2
     b = p3 - p2
+    if (np.cross(a,b).dot(np.cross(a,b)) < 1e-10):
+        ax.plot([p1[0], p3[0]], [p1[1], p3[1]], [p1[2], p3[2]])
+        return
     r = np.cross(a.dot(a)*b - b.dot(b)*a, np.cross(a,b)) / (2*np.cross(a,b).dot(np.cross(a,b)))
     #  print(math.sqrt(r.dot(r)))
 

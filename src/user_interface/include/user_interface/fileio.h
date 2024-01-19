@@ -35,7 +35,7 @@ uint8_t read_vec_from_file(const std::string& fname, std::vector<std::vector<dou
 *       0 读取正常
 *       1 文件打开失败，文件不存在等错误
 *       2 数据读取失败，数据类型、存储结构等错误
-*       3 数据结构错误，行元素不相等
+*       3 数据结构错误，行元素数量不相等
 */
 uint8_t read_eigen_from_file(const std::string &fname, Eigen::MatrixXd& mat, int rows = -1);
 

@@ -32,7 +32,6 @@ int main(int argc, char** argv) {
     return 1;
   }
   pntMat.transposeInPlace();
-  std::cout << pntMat.transpose() << std::endl;
 
   // 以向量格式保存拟合点
   fitPnt = std::vector<Eigen::Vector3d>(pntMat.cols());

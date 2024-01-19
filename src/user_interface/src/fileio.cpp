@@ -16,6 +16,7 @@ uint8_t read_vec_from_file(const std::string& fname, std::vector<std::vector<dou
 
     // @see    https://stackoverflow.com/a/24520662
     while (lineStream >> num || !lineStream.eof()) {
+      // 数据读取错误
       if (lineStream.fail()) {
         return 0x02;
       }

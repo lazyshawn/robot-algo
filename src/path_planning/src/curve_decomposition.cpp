@@ -167,8 +167,8 @@ std::vector<std::pair<size_t, double>> arc_approximation(const std::vector<Eigen
   // 对逐段轨迹进行圆弧拟合
   for (size_t i=0; i<sepIdx.size()-1; ++i) {
     double radius = std::numeric_limits<double>::max(), minErr = radius;
-    size_t minErrIdx = sepIdx[i]+1;
-    Eigen::Vector3d begPnt = pntList[sepIdx[i]], endPnt = pntList[sepIdx[i+1]], center = pntList[sepIdx[i]+1];
+    size_t minErrIdx = (sepIdx[i]+sepIdx[i+1])/2;
+    Eigen::Vector3d begPnt = pntList[sepIdx[i]], endPnt = pntList[sepIdx[i+1]];
 
     // 遍历中间点
     for (size_t j=sepIdx[i]+1; j<sepIdx[i+1]-1; ++j) {
@@ -186,7 +186,6 @@ std::vector<std::pair<size_t, double>> arc_approximation(const std::vector<Eigen
         minErrIdx = j;
         minErr = maxErr;
         radius = tmpRadius;
-        center = tmpCenter;
       }
     } // for (j)
     // 保存该段轨迹中需要的数据
