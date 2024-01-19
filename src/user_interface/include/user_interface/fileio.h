@@ -17,8 +17,13 @@
 * @param  fname      文件名称
 * @param  [out] data 二维数组
 * @param  rows       读取行数, -1 表示读取全部
+* @see    https://stackoverflow.com/a/24520662
+* @return 读取状态
+*       0 读取正常
+*       1 文件打开失败，文件不存在等错误
+*       2 数据读取失败，数据类型错误
 */
-void read_vec_from_file(const std::string& fname, std::vector<std::vector<double>>& data, int rows = -1);
+uint8_t read_vec_from_file(const std::string& fname, std::vector<std::vector<double>>& data, int rows = -1);
 
 /**
 * @brief  以矩阵的形式从文件读取数据
@@ -26,8 +31,13 @@ void read_vec_from_file(const std::string& fname, std::vector<std::vector<double
 * @param  [out] mat 矩阵
 * @param  rows      读取行数, -1 表示读取全部
 * @see    https://stackoverflow.com/a/39146048
+* @return 读取状态
+*       0 读取正常
+*       1 文件打开失败，文件不存在等错误
+*       2 数据读取失败，数据类型、存储结构等错误
+*       3 数据结构错误，行元素不相等
 */
-void read_eigen_from_file(const std::string &fname, Eigen::MatrixXd& mat, int rows = -1);
+uint8_t read_eigen_from_file(const std::string &fname, Eigen::MatrixXd& mat, int rows = -1);
 
 /**
 * @brief  检查 json 数据中是否存在给定的字段

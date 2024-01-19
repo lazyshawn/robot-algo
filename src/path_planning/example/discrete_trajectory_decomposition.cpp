@@ -27,8 +27,12 @@ int main(int argc, char** argv) {
   dataFile = argc > 1 ? argv[1] : "final_22.txt";
   std::cout << "Read data from: " << dataFile << std::endl;
 
-  read_eigen_from_file(dataPath + dataFile, pntMat);
+  if (int flag = read_eigen_from_file(dataPath + dataFile, pntMat); flag > 0) {
+    std::cout << "Read data failed with code: " << flag << std::endl;
+    return 1;
+  }
   pntMat.transposeInPlace();
+  std::cout << pntMat.transpose() << std::endl;
 
   // 以向量格式保存拟合点
   fitPnt = std::vector<Eigen::Vector3d>(pntMat.cols());
