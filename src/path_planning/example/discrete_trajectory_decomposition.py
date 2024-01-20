@@ -25,12 +25,10 @@ def axis_angle(axis, angle):
 
 def plot_circle(ax, p1, p2, p3):
     p1, p2, p3 = [np.array(p1), np.array(p2), np.array(p3)]
-    #  print(p1, p2, p3)
-    #  rot = axis_angle([0,0,1], np.pi/2)
-    #  print(rot@[1,0,0])
 
     a = p1 - p2
     b = p3 - p2
+    # 半径过大时，直接绘制直线
     if (np.cross(a,b).dot(np.cross(a,b)) < 1e-10):
         ax.plot([p1[0], p3[0]], [p1[1], p3[1]], [p1[2], p3[2]])
         return
@@ -86,7 +84,8 @@ def plot_mbs(ax, dataFile="final_22.txt"):
         y = [mat[1, int(idx[0][i])], mat[1, int(idx[0][endIdx])]]
         z = [mat[2, int(idx[0][i])], mat[2, int(idx[0][endIdx])]]
         #  ax_mbs.plot(x, y, z, c='r')
-        ax_mbs.scatter(mat[0, int(idx[0][i])],mat[1, int(idx[0][i])],mat[2, int(idx[0][i])], c='b')
+        if (len(idx[0]) < 15):
+            ax_mbs.scatter(mat[0, int(idx[0][i])],mat[1, int(idx[0][i])],mat[2, int(idx[0][i])])
 
     #  for i in [0]:
     for i in range(len(idx[0])):
