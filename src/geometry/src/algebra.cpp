@@ -90,3 +90,14 @@ double circle_fitting(const std::vector<Eigen::Vector3d>& samples, Eigen::Vector
   }
   return r;
 }
+
+Eigen::Vector3d triangular_circumcenter(Eigen::Vector3d beg, Eigen::Vector3d mid, Eigen::Vector3d end) {
+  Eigen::Vector3d a = beg - mid, b = end - mid;
+  if (a.cross(b).squaredNorm() < 1e-12) {
+    double inf = std::numeric_limits<double>::max();
+    return {inf, inf, inf};
+  }
+
+  return (a.squaredNorm()*b - b.squaredNorm()*a).cross(a.cross(b)) / (2*(a.cross(b)).squaredNorm()) + mid;
+}
+

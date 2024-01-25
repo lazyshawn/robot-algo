@@ -2,3 +2,4 @@ numpy
 matplotlib
 sympy
 scipy
+assimp

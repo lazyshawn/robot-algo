@@ -1,15 +1,5 @@
 #include "path_planning/curve_decomposition.h"
 
-Eigen::Vector3d triangular_circumcenter(Eigen::Vector3d beg, Eigen::Vector3d mid, Eigen::Vector3d end) {
-  Eigen::Vector3d a = beg - mid, b = end - mid;
-  if (a.cross(b).squaredNorm() < 1e-12) {
-    double inf = std::numeric_limits<double>::max();
-    return {inf, inf, inf};
-  }
-
-  return (a.squaredNorm()*b - b.squaredNorm()*a).cross(a.cross(b)) / (2*(a.cross(b)).squaredNorm()) + mid;
-}
-
 std::vector<size_t> maximal_blurred_segment_split(const std::vector<Eigen::Vector3d>& pntList, double epsilon) {
   size_t beg = 0, end = 0, n = pntList.size();
   std::vector<std::pair<size_t, size_t>> mbs;

@@ -6,7 +6,8 @@
 #pragma once
 
 #include <vector>
-#include <eigen3/Eigen/Dense>
+
+#include "geometry/algebra.h"
 
 /**
 * @brief  Discrete trajectory with only arcs and straight line segments
@@ -55,15 +56,6 @@ public:
   void clear();
 
 };
-
-/**
-* @brief  Circumcenter of triangle
-* @param  beg    coordinate of beginning point
-* @param  mid    coordinate of middle point
-* @param  end    coordinate of end point
-* @return Circumcenter of given triangle, return {inf, inf, inf} when colinear
-*/
-Eigen::Vector3d triangular_circumcenter(Eigen::Vector3d beg, Eigen::Vector3d mid, Eigen::Vector3d end);
 
 /**
 * @brief  Split a curve into maximal blurred segments (MBS)
