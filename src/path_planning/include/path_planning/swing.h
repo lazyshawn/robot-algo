@@ -32,6 +32,27 @@ enum class SwingType {
 std::vector<Eigen::Vector<double,6>> swing_interpolation(const std::vector<Eigen::Vector3d>& traj, SwingType type);
 
 /**
+* @brief  基础轨迹(line/circle)的摆动插值
+* @param  traj          轨迹点，直线两点，圆弧三点
+* @param  delT          插值周期时长            ms
+* @param  upper         轨迹上方向
+* @param  type          摆动偏移的类型
+* @param  vel           焊接速度                mm/s
+* @param  freq          摆动频率                Hz
+* @param  leftHoldT     左停留时间              ms
+* @param  rightHoldT    右停留时间              ms
+* @param  amplitude     偏移方向振幅(左右)      mm
+* @param  radius        运动方向振幅(前后)      mm
+* @return 轨迹点        vector<Eigen::vector6d>, 轨迹点表示方式为<pos, dir>
+*/
+std::vector<Eigen::Vector<double, 6>>
+swing_interpolation(const std::vector<Eigen::Vector3d> &traj, double delT,
+                    Eigen::Vector3d upper, SwingType type, double vel,
+                    double freq = 1.0, double leftHoldT = 0.0,
+                    double rightHoldT = 0.0, double amplitude = 1.0,
+                    double radius = 1.0);
+
+/**
 * @brief  sin 函数摆动的补偿向量插值
 * @param  phase        当前点位所处的相位角
 * @param  offsetDir    偏移方向，单位化

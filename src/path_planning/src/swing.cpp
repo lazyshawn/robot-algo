@@ -1,5 +1,15 @@
 #include "path_planning/swing.h"
 
+// 摆动补偿函数的函数签名
+typedef std::function<Eigen::Vector3d(double phase, Eigen::Vector3d offsetDir, Eigen::Vector3d dir, double amplitude, double radius)> swingFuncType;
+// 摆动类型与补偿函数的映射表
+static std::map<SwingType, swingFuncType> funcMap = {
+  {SwingType::SIN, sin_swing},
+  {SwingType::CIRCLE, circle_swing},
+  {SwingType::LEMNI, lemniscate_swing},
+  {SwingType::L, L_swing},
+};
+
 Eigen::Vector3d sin_swing(double phase, Eigen::Vector3d offsetDir, Eigen::Vector3d dir, double amplitude, double radius) {
   return std::sin(phase) * offsetDir * amplitude;
 }
@@ -38,15 +48,6 @@ Eigen::Vector3d L_swing(double phase, Eigen::Vector3d offsetDir, Eigen::Vector3d
 }
 
 std::vector<Eigen::Vector<double,6>> swing_interpolation(const std::vector<Eigen::Vector3d>& traj, SwingType type) {
-  // 摆动补偿函数的函数签名
-  typedef std::function<Eigen::Vector3d(double phase, Eigen::Vector3d offsetDir, Eigen::Vector3d dir, double amplitude, double radius)> swingFuncType;
-  // 摆动类型与补偿函数的映射表
-  static std::map<SwingType, swingFuncType> funcMap = {
-    {SwingType::SIN, sin_swing},
-    {SwingType::CIRCLE, circle_swing},
-    {SwingType::LEMNI, lemniscate_swing},
-    {SwingType::L, L_swing},
-  };
   swingFuncType swingFunc = funcMap[type];
 
   // 上方向
@@ -124,3 +125,63 @@ std::vector<Eigen::Vector<double,6>> swing_interpolation(const std::vector<Eigen
   return result;
 }
 
+std::vector<Eigen::Vector<double, 6>>
+swing_interpolation(const std::vector<Eigen::Vector3d> &traj, double delT,
+                    Eigen::Vector3d upper, SwingType type, double vel,
+                    double freq, double leftHoldT, double rightHoldT,
+                    double amplitude, double radius) {
+  // 摆动的偏移函数
+  swingFuncType swingFunc = funcMap[type];
+
+  // 总距离
+  double totalDist = 0.0;
+  Eigen::Vector3d beg = traj.front(), end = traj.back(), cen(0,0,0);
+  std::vector<Eigen::Vector<double,6>> result;
+
+  // 直线
+  if (traj.size() == 2) {
+    // 总位移
+    Eigen::Vector3d path = traj[1] - traj[0], dir = path.normalized();
+    // 偏移方向
+    Eigen::Vector3d offsetDir = dir.cross(upper);
+    // 总位移
+    totalDist = path.norm();
+    // 运行时间
+    double totalT = totalDist / vel;
+    // 插值点数: 周期数(向下取整) + 2
+    size_t num = std::trunc(totalT / delT) + 2;
+
+    result = std::vector<Eigen::Vector<double,6>>(num);
+    for (size_t i=0; i<result.size(); ++i) {
+      // 偏移的相位角
+      double phase = 2*M_PI*i/num*freq;
+      // 牵连运动
+      Eigen::Vector3d ePos = beg + double(i)/num * path;
+      // 相对运动
+      Eigen::Vector3d rPos = swingFunc(phase, offsetDir, dir, amplitude, radius);
+      result[i] << ePos + rPos, dir;
+    }
+  }
+  // 圆弧
+  else if (traj.size() == 3) {
+    Eigen::Vector3d mid = traj[1];
+    cen = triangular_circumcenter(beg, mid, end);
+    // 当前点所在的相位角
+    Eigen::Vector3d op1 = beg - cen, op2 = mid - cen, op3 = end - cen;
+    // 半径过大
+    if (op1.norm() > 1e3) return {};
+    // 正法向: 从起点逆时针绕到终点的单位转轴
+    Eigen::Vector3d norm = op1.cross(op3).normalized();
+    // 夹角
+    double theta = std::acos(op1.dot(op3)/op1.norm()/op3.norm());
+    // 修正夹角和正法向
+    if (op1.cross(op2).dot(op2.cross(op3)) <= 0) {
+      theta = 2*M_PI - theta;
+      norm *= -1;
+    }
+
+    totalDist = op1.norm() * theta;
+  }
+
+  return {};
+}

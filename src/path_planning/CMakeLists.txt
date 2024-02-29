@@ -121,3 +121,13 @@ target_link_libraries(swing_visual PUBLIC
   swing
   user_interface
 )
+
+add_executable(look_ahead_visual
+  ./example/look_ahead_visual.cpp
+)
+target_include_directories(look_ahead_visual PUBLIC
+  ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+target_link_libraries(look_ahead_visual PUBLIC
+  user_interface
+)
