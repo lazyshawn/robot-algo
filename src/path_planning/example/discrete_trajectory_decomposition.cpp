@@ -3,9 +3,9 @@
 
 // 配置参数
 // 直线近似误差
-const double linearErr = 8e-2;
+const double linearErr = 2e-1;
 // 曲率分割误差
-const double curveErr = 8e-2;
+const double curveErr = 2e-1;
 // 数据存放路径
 const std::string dataPath = "data/curve_decomposition/";
 // 文件保存路径

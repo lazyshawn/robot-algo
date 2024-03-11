@@ -28,6 +28,8 @@ public:
   std::vector<size_t> sepIdx;
   //! 圆弧点的索引
   std::vector<size_t> midIdx;
+  //! 圆弧圆心位置、法向和圆心角
+  std::vector<Eigen::Vector<double,6>> arcInfo;
 
 public:
   DiscreteTrajectory();
@@ -50,6 +52,11 @@ public:
   * @param  upper    轨迹上表面方向
   */
   void calc_trajectory_pose(Eigen::Vector3d upper = {0,0,1});
+  /**
+  * @brief  轨迹拐角的圆弧曲线过渡
+  * @param  smooth    平滑度指标，拐角处被平滑的轨迹长度
+  */
+  void arc_transition(double smooth);
   /**
   * @brief  清除数据
   */

@@ -285,3 +285,53 @@ void DiscreteTrajectory::clear() {
   midIdx.clear();
 }
 
+void DiscreteTrajectory::arc_transition(double smooth) {
+  // 上一段轨迹终点, 下一段轨迹的起点处的过渡点
+  Eigen::Vector3d preMark = pntList[sepIdx[1]], aftMark(0,0,0);
+  // 过渡点处的切线方向
+  Eigen::Vector3d preNorm = pntList[sepIdx[1]], aftNorm(0,0,0);
+
+  // 记录第一段轨迹点终点信息
+  if (radii[0] > 1000) {
+    preNorm = (pntList[sepIdx[1]] - pntList[sepIdx[0]]).normalized();
+    preMark = pntList[sepIdx[1]] - preNorm*smooth;
+  } else {
+    // 半径
+    double radius = (arcInfo[0].head(3) - pntList[sepIdx[1]]).norm();
+    // 法向量
+    Eigen::Vector3d normal = arcInfo[0].tail(3).normalized();
+    // 过渡圆弧对应的圆心角
+    double ang = smooth / radius;
+    // 过渡点位置
+    preMark = Eigen::AngleAxisd(-ang, normal) * (pntList[sepIdx[1]] - arcInfo[0].head(3)) + arcInfo[0].head(3);
+    // 切线方向
+    preNorm = normal.cross((preMark - arcInfo[0].head(3)).normalized());
+  }
+
+  // 遍历每一段轨迹
+  for (size_t i=1; i<midIdx.size(); ++i) {
+    if (radii[i] > 1000) {
+      // 起点处的过渡点
+      aftNorm = (pntList[sepIdx[i+1]] - pntList[sepIdx[i]]).normalized();
+      // 过渡点处的法向量
+      aftMark = pntList[sepIdx[i]] + aftNorm*smooth;
+    } else {
+      // 半径
+      double radius = (arcInfo[i].head(3) - pntList[sepIdx[i+1]]).norm();
+      // 法向量
+      Eigen::Vector3d normal = arcInfo[i].tail(3).normalized();
+      // 过渡圆弧对应的圆心角
+      double ang = smooth / radius;
+      // 过渡点位置
+      aftMark = Eigen::AngleAxisd(ang, normal) * (pntList[sepIdx[i]] - arcInfo[i].head(3)) + arcInfo[i].head(3);
+      // 切线方向
+      aftNorm = normal.cross((aftMark - arcInfo[i].head(3)).normalized());
+    }
+
+    // 计算过渡圆弧
+
+    // 计算终点处的过渡点和切线方向
+  }
+
+}
+

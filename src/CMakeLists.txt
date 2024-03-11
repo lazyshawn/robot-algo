@@ -12,6 +12,8 @@ add_subdirectory(convex_decomposition)
 add_subdirectory(heuristics)
 add_subdirectory(path_planning)
 add_subdirectory(robot_prototype)
+add_subdirectory(data_processing)
+
 add_subdirectory(test)
 
 
