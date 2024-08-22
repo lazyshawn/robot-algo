@@ -39,8 +39,8 @@ bool RobotBase::load_config(std::string fname) {
 
   // * 读取 TCP 位姿
   Eigen::Isometry3d m0;
-  m0.translation() = Eigen::Vector3d(config["end-effector"]["position"].get<std::vector<double>>().data());
-  std::vector<double> xyzw = config["end-effector"]["quaternion"].get<std::vector<double>>();
+  m0.translation() = Eigen::Vector3d(config["end-effector"][0]["position"].get<std::vector<double>>().data());
+  std::vector<double> xyzw = config["end-effector"][0]["quaternion"].get<std::vector<double>>();
   Eigen::Quaterniond tmpQua(xyzw[0], xyzw[1], xyzw[2], xyzw[3]);
   if (1 - tmpQua.norm() > 1e-9) {
     printf("Warning: # loadjson(): poor precision of quaternion.\n");

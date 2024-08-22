@@ -41,30 +41,32 @@ public:
 public:
   /**
   * @brief  从 json 文件中读取机械臂配置数据
-  * @param  [in] fname 配置文件路径
-  * @return 0 - 读取成功; 1 - 读取失败;
+  * @param  fname 配置文件路径
+  * @return 读取状态:
+  *       0 读取成功;
+  *       1 读取失败;
   */
   bool load_config(std::string fname);
   /**
   * @brief  求解正运动学
-  * @param  [in] theta 关节角 (rad)
-  * @param  [in] eeIdx 末端执行器序号
+  * @param  theta    关节角 (rad)
+  * @param  eeIdx    末端执行器序号
   * @return 末端执行器位姿信息
   */
   Eigen::Isometry3d solve_forward_kinematics(std::vector<double> theta, size_t eeIdx = 0) const;
   /**
   * @brief  肘形机械臂逆运动学 - Inverse kinematics of elbow manipulator
-  * @param  pose 齐次转换矩阵
-  * @param  initJoint 初始关节角
-  * @param  eeIdx 末端执行器的序号
+  * @param  pose         齐次转换矩阵
+  * @param  initJoint    初始关节角
+  * @param  eeIdx        末端执行器的序号
   * @return 距离初始关节角最近的逆解
   */
   virtual std::optional<std::vector<std::vector<double>>> solve_inverse_kinematics(const Eigen::Isometry3d &pose, const std::vector<double> &initJoint = {}, size_t eeIdx = 0) const;
 
   /**
   * @brief  肘形机械臂的所有逆运动学解
-  * @param  pose 齐次转换矩阵
-  * @param  eeIdx 末端执行器的序号
+  * @param  pose     齐次转换矩阵
+  * @param  eeIdx    末端执行器的序号
   * @return 所有合理的逆运动学解
   */
   std::vector<std::vector<double>> get_all_ik_solutions(const Eigen::Isometry3d &pose, size_t eeIdx = 0);

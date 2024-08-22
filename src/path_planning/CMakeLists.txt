@@ -52,10 +52,25 @@ add_library(curve_decomposition
 # )
 
 # Then, link libraries
-# target_link_libraries(curve_decomposition PUBLIC )
+target_link_libraries(curve_decomposition PUBLIC algebra)
 
 # Then, carefully add your include directories. All of your `target_include_directories` must look like this
 target_include_directories(curve_decomposition PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+)
+
+###############################################################################
+add_library(swing
+  src/swing.cpp
+)
+
+target_link_libraries(swing PUBLIC
+  algebra
+  user_interface
+)
+
+target_include_directories(swing PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
@@ -91,4 +106,40 @@ add_executable(discrete_trajectory_decomposition
 target_include_directories(discrete_trajectory_decomposition PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
-target_link_libraries(discrete_trajectory_decomposition PUBLIC curve_decomposition)
+target_link_libraries(discrete_trajectory_decomposition PUBLIC
+  curve_decomposition
+  user_interface
+)
+
+add_executable(swing_visual
+  ./example/swing_visual.cpp
+)
+target_include_directories(swing_visual PUBLIC
+  ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+target_link_libraries(swing_visual PUBLIC
+  swing
+  user_interface
+)
+
+add_executable(look_ahead_visual
+  ./example/look_ahead_visual.cpp
+)
+target_include_directories(look_ahead_visual PUBLIC
+  ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+target_link_libraries(look_ahead_visual PUBLIC
+  user_interface
+  curve_decomposition
+)
+
+add_executable(test_bezier
+  ./example/bezier.cpp
+)
+target_include_directories(test_bezier PUBLIC
+  ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+target_link_libraries(test_bezier PUBLIC
+  user_interface
+  curve_decomposition
+)

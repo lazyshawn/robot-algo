@@ -1,1 +1,1 @@
-__all__ = ['matrixIO', 'plotUtils']
+__all__ = ['matrixIO', 'plotUtils', 'kinematics']

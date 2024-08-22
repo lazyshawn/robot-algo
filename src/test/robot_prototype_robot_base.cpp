@@ -5,7 +5,7 @@ const double pi = 3.1415926535897932384626433832795028841971693993751058209;
 
 // std::string fname("data/config/fanuc_m20id25_scan.json");
 // std::string fname("data/config/KUKA_KR210_R2700_EXTRA.json");
-std::string fname("data/config/YASKAWA_GP_280L.json");
+std::string fname("data/eston/config.json");
 RobotBase robot;
 
 void pk_problem();
@@ -14,14 +14,63 @@ void calc();
 
 int main(int argc, char** argv) {
   // 读取配置文件
-  if (!robot.load_config(fname)) {
-    std::cout << "# Load robot config failed." << std::endl;
-    return -1;
+  // if (!robot.load_config(fname)) {
+  //   std::cout << "# Load robot config failed." << std::endl;
+  //   return -1;
+  // }
+  // std::vector<double> theta = {4.4905, 5.5693, 21.4805, 0.2473, 65.8244, 129.9559};
+  std::vector<double> theta = {-5.136, -7.4044, 34.2832, -0.2824, 65.9928, -43.9743};
+  // std::vector<double> theta = {10, 10, 10, 10, 10, 10};
+  // std::vector<double> theta = {10, 10, 10, 10, 10, 10};
+  // std::vector<double> theta = {10, 10, 10, 10, 10, 10};
+
+  Eigen::MatrixXd mat = get_random_matrix(2,100, 10);
+  std::ofstream op("build/random.txt");
+  for (size_t i=0; i<mat.cols(); ++i) {
+    op << mat.col(i).transpose() << std::endl;
   }
 
-  kinematics();
+  // kinematics();
 
   return 0;
+}
+
+Eigen::Matrix3d rpy_to_rot(const Eigen::Vector3d& euler) {
+  Eigen::Matrix3d mat;
+
+  double alpha = euler[2]*M_PI/180, beta = euler[1]*M_PI/180, gama = euler[0]*M_PI/180;
+
+  mat(0,0) = cos(alpha)*cos(beta);
+  mat(0,1) = cos(alpha)*sin(beta)*sin(gama) - sin(alpha)*cos(gama);
+  mat(0,2) = cos(alpha)*sin(beta)*cos(gama) + sin(alpha)*sin(gama);
+
+  mat(1,0) = sin(alpha)*cos(beta);
+  mat(1,1) = sin(alpha)*sin(beta)*sin(gama) + cos(alpha)*cos(gama);
+  mat(1,2) = sin(alpha)*sin(beta)*cos(gama) - cos(alpha)*sin(gama);
+
+  mat(2,0) = -sin(beta);
+  mat(2,1) = cos(beta)*sin(gama);
+  mat(2,2) = cos(beta)*cos(gama);
+
+  return mat;
+}
+
+Eigen::Vector3d rot_to_rpy(const Eigen::Matrix3d& mat) {
+  Eigen::Vector3d euler;
+
+  double ftemp = std::sqrt(mat(0,0) * mat(0,0) + mat(0,1) * mat(0,1));
+
+  if (ftemp < 1e-6) {
+    euler[0] = 0;
+    euler[1] = atan2(-mat(0,2), ftemp);
+    euler[2] = atan2(-mat(1,0), mat(1,1));
+  } else {
+    euler[0] = atan2(mat(1,2), mat(2,2));
+    euler[1] = atan2(-mat(0,2), ftemp);
+    euler[2] = atan2(mat(0,1), mat(0,0));
+  }
+
+  return euler;
 }
 
 void calc() {

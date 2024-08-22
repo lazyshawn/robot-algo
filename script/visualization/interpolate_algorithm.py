@@ -301,10 +301,26 @@ def test_single_axis():
 
     plt.show()
 
+def test():
+    fig = plt.figure('plotUtils test',figsize=(16,9))
+    ax = plt.subplot(111)
+
+    T = 0.5
+    tList = np.linspace(0,T, 50)
+    param = calc_fifth_polynomial_interp_parameters(0, 1, 0, 0, T, 20, 0)
+    print(param)
+
+    sList = [fifth_polynomial_interpolate(param, t)[0] for t in tList]
+
+    ax.plot(tList, sList)
+
+    plt.show()
+    return
 
 if __name__ == "__main__":
-    test_multi_axis()
+    #  test_multi_axis()
     #  test_single_axis()
+    test()
 
 
 

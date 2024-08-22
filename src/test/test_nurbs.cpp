@@ -40,7 +40,8 @@ int main(int argc, char** argv) {
 
 void test_auto_fitting() {
   // 从文件读取拟合点数据
-  read_eigen_from_file("data/cluster.txt", pntMat);
+  // read_eigen_from_file("data/cluster.txt", pntMat);
+  read_eigen_from_file("data/nurbs/1.txt", pntMat);
   pntMat.transposeInPlace();
   // fitPnt = std::vector<Eigen::Vector3d>(pntMat.cols());
 
@@ -157,6 +158,7 @@ void test_curve() {
   curve = NURBS_Curve(4, numPnts);
   for (int i=0; i<numPnts; ++i) {
     curve.ctrlPoints[i] = pntMat.col(i);
+    fitPnt[i] = pntMat.col(i);
   }
   // 设置控制点权重
   curve.weight = std::vector<double>(curve.ctrlPoints.size(), 1);
@@ -212,7 +214,7 @@ void record_curve(int sampleNum) {
   for (int i = 0; i < sampleNum; ++i) {
     Eigen::Vector3d point = curve.get_point(u);
     u += du;
-    curveFile << point.transpose() << std::endl;
+    curveFile << point[0] << " " << point[1] << " " << point[2] << std::endl;
   }
 }
 
