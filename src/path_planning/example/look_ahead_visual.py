@@ -42,22 +42,12 @@ def calc_bezier_integral():
 
 
 if __name__ == "__main__":
-    calc_bezier_integral()
-    #  savePath = "build/data/swing/"
-    #  fig = plt.figure('空间三角形',figsize=(8,6))
-    #  #  ax =plt.subplot(111,projection='3d')
-    #  ax =plt.subplot(111)
-    #
-    #  t = np.linspace(0, np.pi, 500)
-    #  y = 1/np.cos(t/2) * (1 - np.sin(t/2))
-    #  z = 1/t
-    #
-    #  ax.scatter(t, y)
-    #  ax.plot([t[0], t[-1]], [y[0], y[-1]], 'r')
-    #  #  ax.plot(t, z)
-    #  set_ax_equal(ax, False)
-    #
-    #  #  plot_path(ax)
-    #
-    #  plt.show()
+    #  calc_bezier_integral()
+    savePath = "build/data/swing/"
+    fig = plt.figure('空间三角形',figsize=(8,6))
+    ax =plt.subplot(111,projection='3d')
+
+    plot_path(ax)
+
+    plt.show()
 

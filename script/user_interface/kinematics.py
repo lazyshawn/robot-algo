@@ -179,6 +179,29 @@ class RobotBase:
                   labels=[handle[i]._label for i in range(self.numLink)])
         return handle
 
+    def plot_tcp(self, ax, theta, coordLen = 100, tcpIdx = 0):
+        handle = []
+        # 机器人基座 - link_0
+        point = self.linkPoint[0]
+        point = np.matmul(self.tran0[0][0:3, 0:3], point) + self.tran0[0][0:3,3].reshape(3,1)
+        # 计算每个连杆的旋转矩阵
+        tran = [np.eye(4) for i in range(self.numLink)]
+        # 第 i 个关节的运动
+        for i in range(self.numJoint-1, -1, -1):
+            # 第 j 个连杆
+            for j in range(self.numLink-1, i-1, -1):
+                tran[j] = np.matmul(lieSE3(self.jointAxis[i] * theta[i]), tran[j])
+
+        # 基坐标系位姿
+        plotUtils.plotCoordinate(ax, self.tran0[0][0:3,0:3], coordLen, self.tran0[0][0:3,3])
+        # TCP 位姿
+        tmpTrans = np.matmul(tran[self.numJoint-1], self.m0[tcpIdx])
+        plotUtils.plotCoordinate(ax, tmpTrans[0:3,0:3], coordLen, tmpTrans[0:3,3])
+        print(tmpTrans)
+
+        plotUtils.set_ax_equal(ax)
+        return handle
+
 if __name__ == "__main__":
     print("This is kinematics.py")
     theta = np.array([0,20,30,90,60,0]) * np.pi / 180

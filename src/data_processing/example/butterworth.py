@@ -12,7 +12,7 @@ def plot_butterworth(ax):
     pnt = read_data_from_txt(savePath+"raw").transpose()
     time = range(0,len(pnt[0]))
     ax.plot(time, pnt[0, :])
-    ax.plot(time, pnt[1, :])
+    ax.plot(time[:-5], pnt[1, 5:])
     return
 
 if __name__ == "__main__":

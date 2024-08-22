@@ -162,6 +162,7 @@ std::vector<std::pair<size_t, double>> arc_approximation(const std::vector<Eigen
 
     // 遍历中间点
     for (size_t j=sepIdx[i]+1; j<sepIdx[i+1]-1; ++j) {
+      // 用当前点作为圆弧中间点
       Eigen::Vector3d tmpCenter = triangular_circumcenter(begPnt, pntList[j], endPnt);
       double tmpRadius = (begPnt - tmpCenter).norm(), maxErr = 0.0;
 
@@ -285,53 +286,228 @@ void DiscreteTrajectory::clear() {
   midIdx.clear();
 }
 
-void DiscreteTrajectory::arc_transition(double smooth) {
-  // 上一段轨迹终点, 下一段轨迹的起点处的过渡点
-  Eigen::Vector3d preMark = pntList[sepIdx[1]], aftMark(0,0,0);
-  // 过渡点处的切线方向
-  Eigen::Vector3d preNorm = pntList[sepIdx[1]], aftNorm(0,0,0);
+void DiscreteTrajectory::export_trajectory(std::vector<Eigen::Vector3d>& nodePnt, std::vector<Eigen::Vector<double,7>>& arcInfo) {
+  nodePnt = std::vector<Eigen::Vector3d>(sepIdx.size());
+  arcInfo = std::vector<Eigen::Vector<double,7>>(midIdx.size());
 
-  // 记录第一段轨迹点终点信息
-  if (radii[0] > 1000) {
-    preNorm = (pntList[sepIdx[1]] - pntList[sepIdx[0]]).normalized();
-    preMark = pntList[sepIdx[1]] - preNorm*smooth;
-  } else {
-    // 半径
-    double radius = (arcInfo[0].head(3) - pntList[sepIdx[1]]).norm();
-    // 法向量
-    Eigen::Vector3d normal = arcInfo[0].tail(3).normalized();
-    // 过渡圆弧对应的圆心角
-    double ang = smooth / radius;
-    // 过渡点位置
-    preMark = Eigen::AngleAxisd(-ang, normal) * (pntList[sepIdx[1]] - arcInfo[0].head(3)) + arcInfo[0].head(3);
-    // 切线方向
-    preNorm = normal.cross((preMark - arcInfo[0].head(3)).normalized());
+  // 轨迹点坐标
+  for (size_t i=0; i<sepIdx.size(); ++i) {
+    nodePnt[i] = pntList[sepIdx[i]];
   }
 
-  // 遍历每一段轨迹
-  for (size_t i=1; i<midIdx.size(); ++i) {
-    if (radii[i] > 1000) {
-      // 起点处的过渡点
-      aftNorm = (pntList[sepIdx[i+1]] - pntList[sepIdx[i]]).normalized();
-      // 过渡点处的法向量
-      aftMark = pntList[sepIdx[i]] + aftNorm*smooth;
-    } else {
-      // 半径
-      double radius = (arcInfo[i].head(3) - pntList[sepIdx[i+1]]).norm();
-      // 法向量
-      Eigen::Vector3d normal = arcInfo[i].tail(3).normalized();
-      // 过渡圆弧对应的圆心角
-      double ang = smooth / radius;
-      // 过渡点位置
-      aftMark = Eigen::AngleAxisd(ang, normal) * (pntList[sepIdx[i]] - arcInfo[i].head(3)) + arcInfo[i].head(3);
-      // 切线方向
-      aftNorm = normal.cross((aftMark - arcInfo[i].head(3)).normalized());
+  // 轨迹近似圆弧的信息
+  for (size_t i=0; i<midIdx.size(); ++i) {
+    Eigen::Vector3d beg = pntList[sepIdx[i]], mid = pntList[midIdx[i]], end = pntList[sepIdx[i+1]];
+    // 计算圆心
+    Eigen::Vector3d center = triangular_circumcenter(beg, mid, end);
+    Eigen::Vector3d op0 = beg - center, op1 = mid - center, op2 = end - center;
+    // 法向量
+    Eigen::Vector3d normal = (op0.cross(op2)).normalized();
+    // 圆心角
+    double theta = std::acos(op0.dot(op2) / op0.norm() / op2.norm());
+
+    // 根据 mid 是否在优弧上，
+    if (normal.dot(op0.cross(op1)) < 0 || normal.dot(op1.cross(op2)) < 0) {
+      // 修正法向量和圆心角
+      normal *= -1;
+      theta = 2*M_PI - theta;
     }
 
-    // 计算过渡圆弧
-
-    // 计算终点处的过渡点和切线方向
+    // 圆心
+    arcInfo[i].head(3) = center;
+    // 半径
+    arcInfo[i](3) = (beg - center).norm();
+    // 正法向
+    arcInfo[i].tail(3) = normal * theta;
   }
-
 }
 
+void DiscreteTrajectory::export_trajectory(std::list<Eigen::Vector3d> &nodePnt, std::list<Eigen::Vector<double, 7>> &arcInfo) {
+  std::vector<Eigen::Vector3d> tmpNodePnt;
+  std::vector<Eigen::Vector<double, 7>> tmpArcInfo;
+
+  export_trajectory(tmpNodePnt, tmpArcInfo);
+
+  nodePnt = std::list<Eigen::Vector3d>(tmpNodePnt.begin(), tmpNodePnt.end());
+  arcInfo = std::list<Eigen::Vector<double, 7>>(tmpArcInfo.begin(), tmpArcInfo.end());
+}
+
+BezierCurve::BezierCurve() {
+}
+
+uint8_t BezierCurve::construct_from_vct(Eigen::Vector3d begPnt, Eigen::Vector3d begVec, Eigen::Vector3d endPnt, Eigen::Vector3d endVec, double bowHightErr) {
+  begVec.normalize();
+  endVec.normalize();
+
+  // 切线夹角
+  double angle = std::acos(begVec.dot(-endVec) / begVec.norm() / endVec.norm());
+  // 系数
+  double nTheta = std::pow(angle, 0.9927) / 2.0769;
+  double d = 32 * bowHightErr / (7*nTheta + 16) / std::sqrt(2+2*cos(angle));
+  double c = d * nTheta;
+  // 检查 Lt = 2c + d in (0, 0.5)
+
+  c = bowHightErr;
+  // 确定控制点坐标
+  ctrlPnt = std::vector<Eigen::Vector3d>(6);
+  ctrlPnt[0] = begPnt;
+  ctrlPnt[1] = begPnt + begVec * c;
+  ctrlPnt[2] = begPnt + 2 * begVec * c;
+  ctrlPnt[3] = endPnt - 2 * endVec * c;
+  ctrlPnt[4] = endPnt - endVec * c;
+  ctrlPnt[5] = endPnt;
+
+  return 0;
+}
+
+uint8_t BezierCurve::construct_from_corner(Eigen::Vector3d begPnt, Eigen::Vector3d midPnt, Eigen::Vector3d endPnt, double bowHightErr) {
+    // 确认夹角
+  Eigen::Vector3d preDir = (begPnt - midPnt).normalized(), aftDir = (endPnt - midPnt).normalized();
+  double angle = std::acos(preDir.dot(aftDir));
+
+  double nTheta = std::pow(angle, 0.9927) / 2.0769;
+  double d = 32 * bowHightErr / (7*nTheta + 16) / std::sqrt(2+2*cos(angle));
+  double c = d * nTheta;
+  // 检查 Lt = 2c + d in (0, 0.5)
+
+  ctrlPnt = std::vector<Eigen::Vector3d>(6, midPnt);
+  ctrlPnt[0] += preDir*(2*c + d);
+  ctrlPnt[1] += preDir*(c + d);
+  ctrlPnt[2] += preDir*(d);
+  ctrlPnt[3] += aftDir*(d);
+  ctrlPnt[4] += aftDir*(c + d);
+  ctrlPnt[5] += aftDir*(2*c + d);
+
+  return 0;
+}
+
+Eigen::Vector3d BezierCurve::get_point(double param) const {
+    double u = param, mu = 1-u;
+    Eigen::Vector3d pnt =
+        mu * mu * mu * mu * mu * ctrlPnt[0] + 5 * u * mu * mu * mu * mu * ctrlPnt[1] +
+        10 * u * u * mu * mu * mu * ctrlPnt[2] + 10 * u * u * u * mu * mu * ctrlPnt[3] +
+        5 * u * u * u * u * mu * ctrlPnt[4] + u * u * u * u * u * ctrlPnt[5];
+
+    return pnt;
+}
+
+void BezierCurve::discrete_arc_length(std::vector<double> &paraVector, double begPara, double endPara, double terminateCondition,
+                                      double segmentLen, size_t numSegment) const {
+
+    // 初始化节点列表
+  std::list<double> paraList = std::list<double>({begPara, endPara});
+  // 初始化访问队列
+  std::queue<std::list<double>::iterator> iteQueue;
+  iteQueue.push(paraList.begin());
+
+  while (!iteQueue.empty()) {
+    std::list<double>::iterator ite = iteQueue.front();
+    iteQueue.pop();
+    // * 细分前的弦长
+    double beg = *ite, end = *std::next(ite);
+    Eigen::Vector3d curNode = get_point(*ite), endNode = get_point(end);
+    // 初始弦长
+    double rawChordLength = (curNode - endNode).norm();
+
+    // * 离散化
+    double intervalLen = (end - beg) / numSegment;
+    // 离散后的弦长之和
+    double newChordLength = 0.0;
+    // 子区间内的最大弦长
+    double maxSubChordLength = 0.0;
+    // 循环变量初始化
+    end = beg;
+    for (size_t i=0; i<numSegment; ++i) {
+      beg = end;
+      Eigen::Vector3d preNode = curNode;
+      end += intervalLen;
+      curNode = get_point(end);
+      double curChordLength = (curNode - preNode).norm();
+      newChordLength += curChordLength;
+      maxSubChordLength = std::max(maxSubChordLength, curChordLength);
+    }
+
+    // * 更新区间节点
+    // 参数区间内曲线长度因细分新增的变化量 (绝对/相对)
+    double absDeltaLength = newChordLength - rawChordLength;
+    double relDeltaLength = absDeltaLength / rawChordLength;
+    if ((relDeltaLength > terminateCondition) || (segmentLen > 0 && (maxSubChordLength > segmentLen))) {
+      std::list<double>::iterator tmpIte = ite;
+      // 重新将区间起点加入访问队列
+      iteQueue.push(tmpIte);
+      double cur = *ite;
+      for (size_t i=1; i<numSegment; ++i) {
+        // 插入新的节点
+        cur += intervalLen;
+        paraList.insert(std::next(tmpIte), cur);
+        // 将新的节点加入访问队列
+        tmpIte++;
+        iteQueue.push(tmpIte);
+      }
+    } else {
+      std::list<double>::iterator tmpIte = ite;
+      double cur = *ite;
+      for (size_t i=1; i<numSegment; ++i) {
+        // 插入新的节点
+        cur += intervalLen;
+        paraList.insert(std::next(tmpIte), cur);
+        tmpIte++;
+      }
+    } // if (newChordLength - rawChordLength)
+
+  } // while (!iteQueue.empty())
+
+  // 将节点列表转化为向量形式
+  paraVector = std::vector<double>(std::make_move_iterator(paraList.begin()), std::make_move_iterator(paraList.end()));
+
+} // discrete_arc_length()
+
+double BezierCurve::get_chord_length(const std::vector<double>& nodePara, std::vector<double>& cumuChordLength) const {
+  cumuChordLength.clear();
+  cumuChordLength.reserve(nodePara.size());
+
+  double length = 0.0;
+  Eigen::Vector3d end = get_point(*nodePara.begin());
+  for (auto& ite : nodePara) {
+    Eigen::Vector3d beg = end;
+    end = get_point(ite);
+    length += (beg-end).norm();
+    cumuChordLength.emplace_back(length);
+  }
+  return length;
+}
+
+std::vector<double> BezierCurve::get_uniform_sample(const std::vector<double> &discretePara, const std::vector<double> &cumuChordLength,
+    double length, double threshold) const {
+
+    // 采样点对应的参数值
+  std::vector<double> uniformParaVector;
+
+  double curveLength = *(cumuChordLength.end() - 1);
+  int numSegment = std::ceil(curveLength / length);
+  // 分段长度
+  double detLen = curveLength / numSegment, curChordLength = 0.0;
+  size_t curSegmentIdx = 0;
+  for (size_t i = 0; i < discretePara.size(); ++i) {
+    if (cumuChordLength[i] > curChordLength) {
+      uniformParaVector.emplace_back(discretePara[i-1]);
+      curSegmentIdx++;
+      // 间隔更接近给定值，但最后一段会更短
+      // curChordLength = cumuChordLength[i-1] + detLen;
+      // 整体间隔更均匀，但间隔可能大于给定值，超出的范围取决于曲线离散化程度
+      curChordLength = curSegmentIdx * detLen;
+      // std::cout << "idx = " << i - 1 << ", " << cumuChordLength[i - 1] << std::endl;
+    }
+  }
+  uniformParaVector.emplace_back(*(discretePara.end()-1));
+  return uniformParaVector;
+}
+
+std::vector<double> BezierCurve::get_uniform_sample(double length) {
+  std::vector<double> paraVec;
+  discrete_arc_length(paraVec, 0, 1, 1e-2, length*0.1);
+  std::vector<double> cumuChordLength;
+  get_chord_length(paraVec, cumuChordLength);
+  std::vector<double> samplePara = get_uniform_sample(paraVec, cumuChordLength, length);
+  return samplePara;
+}

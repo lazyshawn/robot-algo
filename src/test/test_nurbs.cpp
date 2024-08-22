@@ -40,7 +40,8 @@ int main(int argc, char** argv) {
 
 void test_auto_fitting() {
   // 从文件读取拟合点数据
-  read_eigen_from_file("data/cluster.txt", pntMat);
+  // read_eigen_from_file("data/cluster.txt", pntMat);
+  read_eigen_from_file("data/nurbs/1.txt", pntMat);
   pntMat.transposeInPlace();
   // fitPnt = std::vector<Eigen::Vector3d>(pntMat.cols());
 

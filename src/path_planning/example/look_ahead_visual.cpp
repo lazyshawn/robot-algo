@@ -1,4 +1,5 @@
 #include "user_interface/user_interface.h"
+#include "path_planning/curve_decomposition.h"
 
 Eigen::MatrixXd linePnt;
 
@@ -12,6 +13,7 @@ Eigen::MatrixXd linePnt;
 void quintic_bezier_smooth(Eigen::Vector3d beg, Eigen::Vector3d mid, Eigen::Vector3d end);
 
 int main(int argc, char** argv) {
+  BezierCurve curve;
   std::cout << "hello world" << std::endl;
 
   linePnt = get_random_matrix(3,3);
@@ -19,12 +21,22 @@ int main(int argc, char** argv) {
   std::cout << linePnt << std::endl;
 
   Eigen::Vector3d beg = linePnt.row(0), mid = linePnt.row(1), end = linePnt.row(2);
-  quintic_bezier_smooth(beg, mid, end);
+  // quintic_bezier_smooth(beg, mid, end);
+  curve.construct_from_corner(beg, mid, end, 0.2);
 
 
+  // 保存轨迹点
   std::ofstream lineFile("build/data/look_ahead/line_pnt");
   for (size_t i=0; i<linePnt.rows(); ++i) {
     lineFile << linePnt.row(i) << std::endl;
+  }
+
+  // 保存样条曲线点
+  std::ofstream curveFile("build/data/look_ahead/curve_pnt");
+  size_t numPnt = 100;
+  for (size_t i=0; i<numPnt; ++i) {
+    double u = 1.0 / (numPnt-1) * i;
+    curveFile << curve.get_point(u).transpose() << std::endl;
   }
 
   return 0;

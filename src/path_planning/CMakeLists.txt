@@ -130,4 +130,16 @@ target_include_directories(look_ahead_visual PUBLIC
 )
 target_link_libraries(look_ahead_visual PUBLIC
   user_interface
+  curve_decomposition
+)
+
+add_executable(test_bezier
+  ./example/bezier.cpp
+)
+target_include_directories(test_bezier PUBLIC
+  ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+target_link_libraries(test_bezier PUBLIC
+  user_interface
+  curve_decomposition
 )
